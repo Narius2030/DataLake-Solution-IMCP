@@ -1,5 +1,6 @@
 /.venv/**
 /.vscode/**
+/config.json
 /data/mongodb/**
 /airflow/airflow.cfg
 /airflow/airflow.db
