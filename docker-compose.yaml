@@ -19,4 +19,4 @@ services:
       MONGO_INITDB_ROOT_USERNAME: admin
       MONGO_INITDB_ROOT_PASSWORD: nhanbui
     volumes:
-      - ./data/:/data/db/
+      - ./data/mongodb/:/data/mongodb/
