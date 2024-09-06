@@ -1,4 +1,5 @@
 # Data Pipeline Strategy
 
-![image](https://github.com/user-attachments/assets/7dc367c1-0d4d-4a01-b47a-06530a179c84)
+![image](https://github.com/user-attachments/assets/900a2f6f-a446-4864-a5fb-ce963860ddc3)
+
 
