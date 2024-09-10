@@ -1,8 +1,0 @@
-connectors:
--
-  connector_id: "TZehx5EB1Ms6YJeCT1Y4"
-  service_type: "mongodb"
-
-elasticsearch:
-  host: "http://localhost:9200"
-  api_key: "WFpuNXU1RUJLemNQcTVzVEpkaWM6eWpWRl8yRDFRaGFseEtsM08yS0toQQ=="
