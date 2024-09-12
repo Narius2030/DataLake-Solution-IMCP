@@ -1,39 +1,27 @@
-from pyspark.sql import Row
+from pyspark.sql.functions import col, lower, lit
+import pyspark.sql.functions as F
+from pyspark.sql.types import StringType, ArrayType
+from datetime import datetime
 import re
 
-# lower case captions
-def lower_case(row):
-    lowered_caption = row['caption'].lower()
-    lowered_shrtcaption = row['short_caption'].lower()
-    return Row(_id=row['_id'], 
-                caption=lowered_caption, 
-                created_time=row['created_time'], 
-                howpublished=row['howpublished'],
-                publisher=row['publisher'], 
-                short_caption=lowered_shrtcaption, 
-                url=row['url'], year=row['year'])
+def lower_case(input_df):
+    temp_lwc = input_df.withColumn('caption', lower(col('caption')))
+    temp_lwc = temp_lwc.withColumn('short_caption', lower(col('short_caption')))
+    return temp_lwc
+    
+def remove_punctuations(input_df):
+    remove_punc_udf = F.udf(lambda text: re.sub(r'[^a-zA-Z\s]', '', text), StringType())
+    temp_rmp = input_df.withColumn('caption', remove_punc_udf(col('caption')))
+    temp_rmp = temp_rmp.withColumn('short_caption', remove_punc_udf(col('short_caption')))
+    return temp_rmp
+    
+def tokenize_caption(input_df):
+    tokenize_udf = F.udf(lambda text: text.split(" "), ArrayType(StringType()))
+    temp_tok = input_df.withColumn('caption_tokens', tokenize_udf(col('caption')))
+    temp_tok = temp_tok.withColumn('short_caption_tokens', tokenize_udf(col('short_caption')))
+    return temp_tok
 
-def remove_punctuations(row):
-    caption = re.sub(r'[^\w\d\s]', '', row['caption'])
-    shrt_caption = re.sub(r'[^\w\d\s]', '', row['short_caption'])
-    return Row(_id=row['_id'],
-                caption=caption, 
-                created_time=row['created_time'], 
-                howpublished=row['howpublished'],
-                publisher=row['publisher'], 
-                short_caption=shrt_caption, 
-                url=row['url'], year=row['year'])
-    
-def tokenize(row):
-    caption = row['caption'].split()
-    shrt_caption = row['short_caption'].split()
-    return Row(_id=row['_id'],
-                caption=caption, 
-                created_time=row['created_time'], 
-                howpublished=row['howpublished'],
-                publisher=row['publisher'], 
-                short_caption=shrt_caption, 
-                url=row['url'], year=row['year'])
-    
-def test():
-    print("Hello")
+def scaling(input_df):
+    temp_scale = input_df.withColumn('created_time', lit(datetime.now()))
+    temp_scale = temp_scale.select(['url', 'caption', 'short_caption', 'caption_tokens', 'short_caption_tokens', 'publisher', 'created_time'])
+    return temp_scale
