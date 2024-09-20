@@ -1,5 +1,5 @@
 import sys
-sys.path.append('./')
+sys.path.append('./airflow')
 
 from functions.text.clean import lower_case, tokenize_caption, remove_punctuations, scaling
 from pyspark.sql import SparkSession
