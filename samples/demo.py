@@ -1,42 +1,23 @@
 from google.cloud import firestore
 from google.cloud.firestore_v1.base_query import FieldFilter, Or, And
+import pandas as pd
 
-# Add a new document
-db = firestore.Client()
 
-def create_document(data:dict=None, document_name:str=None):
-    doc_ref = db.collection(u'users').document(document_name)
-    doc_ref.set(data)
-    print("DocumentID: ", doc_ref.id)
+def load_parquet(params):
+    df = pd.read_parquet(params['file-path'], params['engine'])
+    df['created_time'] = pd.to_datetime('now')
+    df['publisher'] = 'HuggingFace'
+    df['year'] = '2023'
+    df['howpublished'] = 'https://huggingface.co/datasets/laion/220k-GPT4Vision-captions-from-LIVIS'
+    df['_id'] = df['url'].map(lambda x: x[-16:-4])
+    print(df.head())
     
-def get_documents(collection_name:str):
-    for doc in db.collection(collection_name).stream():
-        data = doc.to_dict()
-        print(data)
-        
-def filter_documnet(collection_name:str):
-    doc_ref = db.collection(collection_name)
-    docs = doc_ref.order_by('last', direction=firestore.Query.DESCENDING).start_at({'first': 'Tony'}).stream()
-    
-    for doc in docs:
-        print(doc.to_dict())
-
-
-
 
 if __name__ == '__main__':
-    
-    import requests
-
-    url = "https://api.themoviedb.org/3/trending/all/day?language=en-US"
-
-    headers = {
-        "accept": "application/json",
-        "Authorization": "Bearer eyJhbGciOiJIUzI1NiJ9.eyJhdWQiOiJmMzE0OGE4OWJhZTczOGQ1ZDRiYzVkMGYwYzllODI3MyIsIm5iZiI6MTcyNjE4ODcyOS4xMTE0MzQsInN1YiI6IjY1ZDIxYzcxNmVlY2VlMDE4YTM5MmZkNyIsInNjb3BlcyI6WyJhcGlfcmVhZCJdLCJ2ZXJzaW9uIjoxfQ.iK4TL7F8nDMkFCcO4IJAgiap8hWbm7fHHfjP3csyBlk"
+    params = {
+        'file-path': './airflow/data/HuggingFace/lvis_caption_url.parquet',
+        'engine': 'pyarrow'
     }
-
-    response = requests.get(url, headers=headers)
-
-    print(response.text)
+    load_parquet(params)
     
     

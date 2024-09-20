@@ -3,14 +3,12 @@ sys.path.append('./')
 
 from functions.text.clean import lower_case, tokenize_caption, remove_punctuations, scaling
 from pyspark.sql import SparkSession
-from pyspark.sql import Row
 import pymongo
 import pandas as pd
-import re
 import json
 
 
-with open("./airflow/config/env.json", "r") as file:
+with open("/opt/airflow/config/env.json", "r") as file:
     config = json.load(file)
     mongo_url = config['mongodb']['MONGO_ATLAS_PYTHON_GCP']
 
@@ -47,7 +45,7 @@ def normalize_caption():
     bronze_df = spark.read.format("com.mongodb.spark.sql.DefaultSource") \
                         .option('spark.mongodb.input.uri', mongo_url) \
                         .option('spark.mongodb.input.database', 'imcp') \
-                        .option('spark.mongodb.input.collection', 'bronze_layer') \
+                        .option('spark.mongodb.input.collection', 'raw') \
                         .load()
 
     start_time = pd.to_datetime('now')
@@ -83,12 +81,11 @@ def normalize_caption():
                 }
             }])
         affected_rows = len(list(documents))
-
         # Write logs
         audit_log(start_time, pd.to_datetime('now'), status="ERROR", error_message=str(exc), action="insert", affected_rows=affected_rows)
         
         #Raise error
-        raise Exception (str(exc))
+        raise Exception(str(exc))
     
     print('''
             ===========================================================
@@ -100,5 +97,5 @@ def normalize_caption():
 
 
 if __name__=='__main__':
-    normalize_caption()
-    # pass
+    # normalize_caption()
+    pass
