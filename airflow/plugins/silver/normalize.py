@@ -34,10 +34,14 @@ def audit_log(start_time, end_time, status, error_message="", affected_rows=0, a
 def normalize_caption():
     # create a local SparkSession
     spark = SparkSession.builder \
-                    .config("spark.jars.packages", "org.mongodb.spark:mongo-spark-connector_2.12:3.0.1") \
-                    .config("spark.driver.maxResultSize", "1536mb") \
-                    .appName("readExample") \
-                    .getOrCreate()
+                .config("spark.jars.packages", "org.mongodb.spark:mongo-spark-connector_2.12:3.0.1") \
+                .config("spark.driver.maxResultSize", "1g") \
+                .config("spark.network.timeout", "300s") \
+                .config("spark.executor.heartbeatInterval", "120s") \
+                .config("spark.executor.memory", "4g") \
+                .config("spark.driver.memory", "2g") \
+                .appName("Normalize data") \
+                .getOrCreate()
 
     # define a batch query
     bronze_df = spark.read.format("com.mongodb.spark.sql.DefaultSource") \

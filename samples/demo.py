@@ -25,14 +25,18 @@ def filter_documnet(collection_name:str):
 
 
 if __name__ == '__main__':
-    data = {
-        u'first': u'Xony',
-        u'last': u'Nguyen',
-        u'born': 2002
+    
+    import requests
+
+    url = "https://api.themoviedb.org/3/trending/all/day?language=en-US"
+
+    headers = {
+        "accept": "application/json",
+        "Authorization": "Bearer eyJhbGciOiJIUzI1NiJ9.eyJhdWQiOiJmMzE0OGE4OWJhZTczOGQ1ZDRiYzVkMGYwYzllODI3MyIsIm5iZiI6MTcyNjE4ODcyOS4xMTE0MzQsInN1YiI6IjY1ZDIxYzcxNmVlY2VlMDE4YTM5MmZkNyIsInNjb3BlcyI6WyJhcGlfcmVhZCJdLCJ2ZXJzaW9uIjoxfQ.iK4TL7F8nDMkFCcO4IJAgiap8hWbm7fHHfjP3csyBlk"
     }
-    # create_document(data)
+
+    response = requests.get(url, headers=headers)
+
+    print(response.text)
     
-    # get_documents('users')
-    
-    print(filter_documnet('users'))
     
