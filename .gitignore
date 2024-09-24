@@ -8,3 +8,4 @@
 /airflow/webserver_config.py
 /airflow/standalone_admin_password.txt
 /airflow/logs/**
+/airflow/functions/images/yolo/model/**

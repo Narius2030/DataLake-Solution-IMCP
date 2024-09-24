@@ -1,16 +1,22 @@
 import cv2
 import numpy as np
+import tempfile
+
+
+def get_Net_yolov4(cfg_file, weight_file):
+    net = cv2.dnn.readNet(cfg_file, weight_file)
+    return net
 
 
 # Trích xuất đặc trưng từ YOLO
-def extract_yolo_features(img_path):
-    net = cv2.dnn.readNet("./models/yolov4.weights", "./models/yolov4.cfg")
+def extract_yolo_features(net, img_response):
     layer_names = net.getLayerNames()
     output_layers = [layer_names[i - 1] for i in net.getUnconnectedOutLayers()]
-
-    img = cv2.imread(img_path)
+    img_array = np.frombuffer(img_response, np.uint8)
+    img = cv2.imdecode(img_array, cv2.IMREAD_COLOR)
+    # img = cv2.imread(img_path)
     if img is None:
-        raise ValueError(f"Không thể đọc ảnh từ đường dẫn: {img_path}")
+        raise ValueError(f"Không thể đọc ảnh từ response")
     
     blob = cv2.dnn.blobFromImage(img, 0.00392, (416, 416), (0, 0, 0), True, crop=False)
     net.setInput(blob)
