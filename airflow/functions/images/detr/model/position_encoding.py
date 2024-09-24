@@ -2,11 +2,14 @@
 """
 Various positional encodings for the transformer.
 """
+
+import sys
+sys.path.append('./airflow/functions/images')
+from detr.util.misc import NestedTensor
+
 import math
 import torch
 from torch import nn
-
-from util.misc import NestedTensor
 
 
 class PositionEmbeddingSine(nn.Module):

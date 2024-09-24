@@ -1,9 +1,6 @@
 # orchestration
-google-cloud-firestore
-pyspark
 apache-airflow-providers-apache-spark==4.8.0
 apache-airflow
-pymongo
 
 # model
 cython
@@ -13,8 +10,9 @@ torch>=1.5.0
 torchvision>=0.6.0
 git+https://github.com/cocodataset/panopticapi.git#egg=panopticapi
 scipy
-onnx
-onnxruntime
+opencv-python
 
 # additional
 tqdm
+pymongo
+pyspark

@@ -2,11 +2,14 @@
 """
 Modules to compute the matching cost and solve the corresponding LSAP.
 """
+
+import sys
+sys.path.append('./airflow/functions/images')
+
+from detr.util.box_ops import box_cxcywh_to_xyxy, generalized_box_iou
 import torch
 from scipy.optimize import linear_sum_assignment
 from torch import nn
-
-from util.box_ops import box_cxcywh_to_xyxy, generalized_box_iou
 
 
 class HungarianMatcher(nn.Module):

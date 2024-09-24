@@ -1,11 +1,14 @@
 # Copyright (c) Facebook, Inc. and its affiliates. All Rights Reserved
-import torch
+import sys
+sys.path.append('./airflow/functions/images')
 
-from models.backbone import Backbone, Joiner
-from models.detr import DETR, PostProcess
-from models.position_encoding import PositionEmbeddingSine
-from models.segmentation import DETRsegm, PostProcessPanoptic
-from models.transformer import Transformer
+from detr.model.backbone import Backbone, Joiner
+from detr.model.detr import DETR, PostProcess
+from detr.model.position_encoding import PositionEmbeddingSine
+from detr.model.segmentation import DETRsegm, PostProcessPanoptic
+from detr.model.transformer import Transformer
+
+import torch
 
 dependencies = ["torch", "torchvision"]
 
