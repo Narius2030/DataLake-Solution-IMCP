@@ -6,7 +6,7 @@ import string
 # Reshape image
 def reshape(image_response):
     transform = T.Compose([
-        T.Resize((240, 240)),
+        T.Resize((640, 640)),
         T.ToTensor(),
         T.Normalize([0.485, 0.456, 0.406], [0.229, 0.224, 0.225])
     ])

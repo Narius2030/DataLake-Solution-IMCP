@@ -2,17 +2,18 @@ import sys
 sys.path.append('./airflow')
 
 import os
-from functions.images.detr.util.features import get_detr_model, extract_detr_features
-from functions.images.yolo.util.features import extract_yolo_features, get_Net_yolov4
-from functions.images.detr.util.transform import reshape
+from functions.images.detr.util.features import get_detr_model
+from functions.images.yolo.util.features import get_Net_yolov4
+from functions.images.combine import combine_yolo_detr
 
 import pymongo
 import json
 import requests
 import numpy as np
 from tqdm import tqdm
-import base64
-from elasticsearch import Elasticsearch
+import pickle
+import time
+
 
 
 with open("./airflow/config/env.json", "r") as file:
@@ -24,10 +25,11 @@ with open("./airflow/config/env.json", "r") as file:
 
 def encode():
     # Tải mô hình DETR
-    detr_model, postprocessor = get_detr_model(pretrained=True)
+    detr_model, _ = get_detr_model(pretrained=True)
     yolo_model = get_Net_yolov4("./airflow/functions/images/yolo/model/yolov4.weights", "./airflow/functions/images/yolo//model/yolov4.cfg")
     # Khởi tạo một dictionary để lưu trữ các đặc trưng của ảnh
-    caches = []
+    yolo_caches = {}
+    detr_caches = {}
 
     # Lặp qua từng ảnh trong thư mục
     with pymongo.MongoClient(mongo_url) as client:
@@ -42,20 +44,32 @@ def encode():
         ]
         documents = db['refined'].aggregate(pipeline)
         for doc in tqdm(documents):
-            try:
-                response = requests.get(doc['url'], timeout=0.5)
-                # Trích xuất đặc trưng từ YOLO
-                yolo_features = extract_yolo_features(yolo_model, response.content)
-                doc['yolov4_encode'] = base64.b64encode(yolo_features)
+            try:                
+                yolov4_encode, detr_encode = combine_yolo_detr(doc['url'], yolo_model, detr_model)
                 
-                # Trích xuất đặc trưng từ DETR
-                image_tensor = reshape(response.content)
-                detr_features = extract_detr_features(image_tensor, detr_model)
-                doc['detr_encode'] = base64.b64encode(detr_features)
-                caches.append(doc)
-                
-                with Elasticsearch(hosts=hugg_host, api_key=hugg_index_key) as es:
-                    es.update(index="huggingface-index", doc=doc, id=doc['url'][-16:-4], doc_as_upsert=True, upsert=doc)    
+                image_id = doc['url'][-16:-4]
+                yolo_caches[image_id] = yolov4_encode
+                detr_caches[image_id] = detr_encode
                     
-            except Exception as exc:
-                continue
+            except ConnectionError:
+                print("Lỗi tải dữ liệu...")
+                for attempt in range(0, 3):
+                    try:
+                        yolov4_encode, detr_encode = combine_yolo_detr(doc['url'])
+                        
+                        image_id = doc['url'][-16:-4]
+                        yolo_caches[image_id] = yolov4_encode
+                        detr_caches[image_id] = detr_encode
+                        
+                        break  # Thành công, thoát khỏi vòng lặp thử lại
+                    except ConnectionError as e:
+                        print(f"Tải lại dữ liệu từ {doc['url']} (lần {attempt+1}/{3}): {e}")
+                        time.sleep(2)  # Chờ đợi trước khi thử lại
+        
+        # savae embeddings to pkl
+        with open(f"./airflow/data/HuggingFace/yolo_embedding.pkl", 'wb') as f:
+            pickle.dump(yolo_caches, f)
+            
+        with open(f"./airflow/data/HuggingFace/detr_embedding.pkl", 'wb') as f:
+            pickle.dump(detr_caches, f)
+                 
