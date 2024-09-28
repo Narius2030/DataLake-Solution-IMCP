@@ -8,6 +8,8 @@ git+https://github.com/cocodataset/cocoapi.git#subdirectory=PythonAPI&egg=pycoco
 submitit
 torch>=1.5.0
 torchvision>=0.6.0
+tensorflow
+ultralytics
 git+https://github.com/cocodataset/panopticapi.git#egg=panopticapi
 scipy
 opencv-python
@@ -16,3 +18,5 @@ opencv-python
 tqdm
 pymongo
 pyspark
+python-dotenv
+pydantic_settings
