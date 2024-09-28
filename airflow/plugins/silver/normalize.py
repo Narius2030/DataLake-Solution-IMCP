@@ -6,15 +6,13 @@ from pyspark.sql import SparkSession
 import pymongo
 import pandas as pd
 import json
+from core.config import get_settings
 
 
-with open("/opt/airflow/config/env.json", "r") as file:
-    config = json.load(file)
-    mongo_url = config['mongodb']['MONGO_ATLAS_PYTHON_GCP']
-
+settings = get_settings()
 
 def audit_log(start_time, end_time, status, error_message="", affected_rows=0, action=""):
-    with pymongo.MongoClient(mongo_url) as client:
+    with pymongo.MongoClient(settings.DATABASE_URL) as client:
         db = client['imcp']
         log = {
             "layer": "silver",
@@ -43,7 +41,7 @@ def normalize_caption():
 
     # define a batch query
     bronze_df = spark.read.format("com.mongodb.spark.sql.DefaultSource") \
-                        .option('spark.mongodb.input.uri', mongo_url) \
+                        .option('spark.mongodb.input.uri', settings.DATABASE_URL) \
                         .option('spark.mongodb.input.database', 'imcp') \
                         .option('spark.mongodb.input.collection', 'raw') \
                         .load()
@@ -52,13 +50,14 @@ def normalize_caption():
     affected_rows = 0
     try:
         # clean the data in RDD
+        bronze_df = bronze_df.limit(8000)
         temp_lwc = lower_case(bronze_df)
         temp_rmp = remove_punctuations(temp_lwc)
         temp_tok = tokenize_caption(temp_rmp)
         silver_df = scaling(temp_tok)
         # insert to mongodb
         silver_df.write.format("com.mongodb.spark.sql.DefaultSource") \
-                .option('spark.mongodb.output.uri', mongo_url) \
+                .option('spark.mongodb.output.uri', settings.DATABASE_URL) \
                 .option('spark.mongodb.output.database', 'imcp') \
                 .option('spark.mongodb.output.collection', 'refined') \
                 .mode('append') \
@@ -69,7 +68,7 @@ def normalize_caption():
         audit_log(start_time, pd.to_datetime('now'), status="SUCCESS", action="insert", affected_rows=affected_rows)
         
     except Exception as exc:
-        with pymongo.MongoClient(mongo_url) as client:
+        with pymongo.MongoClient(settings.DATABASE_URL) as client:
             collection = client['imcp']['refined']
             documents = collection.aggregate([{
                 '$sort': {

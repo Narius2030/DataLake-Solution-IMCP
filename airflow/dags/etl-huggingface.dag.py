@@ -17,7 +17,7 @@ def end():
 
 with open("/opt/airflow/config/env.json", "r") as file:
     config = json.load(file)
-    mongo_url = config['mongodb']['MONGO_ATLAS_PYTHON_GCP']
+    mongo_url = config['MONGO_ATLAS_PYTHON_GCP']
 
 
 # DAGs

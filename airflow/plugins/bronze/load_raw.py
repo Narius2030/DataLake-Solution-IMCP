@@ -1,13 +1,15 @@
+import sys
+sys.path.append('./airflow')
+
 import pymongo
 import pandas as pd
 from tqdm import tqdm
 import json
 import warnings
+from core.config import get_settings
 
 
-with open("/opt/airflow/config/env.json", "r") as file:
-    config = json.load(file)
-    mongo_url = config['mongodb']['MONGO_ATLAS_PYTHON_GCP']
+settings = get_settings()
 
 def data_generator(db, datasets):
     accepted_datas = []
@@ -28,8 +30,8 @@ def data_generator(db, datasets):
             count = 0
             yield accepted_datas
 
-def audit_log(mongo_url, start_time, end_time, status, error_message="", affected_rows=0, action=""):
-    with pymongo.MongoClient(mongo_url) as client:
+def audit_log(start_time, end_time, status, error_message="", affected_rows=0, action=""):
+    with pymongo.MongoClient(settings.DATABASE_URL) as client:
         db = client['imcp']
         log = {
             "layer": "bronze",
@@ -51,7 +53,7 @@ def load_parquet(params):
     df['howpublished'] = 'https://huggingface.co/datasets/laion/220k-GPT4Vision-captions-from-LIVIS'
     datasets = df.to_dict('records')
     
-    with pymongo.MongoClient(params['mongo-gcp-url']) as client:
+    with pymongo.MongoClient(settings.DATABASE_URL) as client:
         db = client["imcp"]
         # start to load
         start_time = pd.to_datetime('now')
@@ -71,15 +73,14 @@ def load_parquet(params):
                         print("Loading...", len(batch))
                         db['raw'].insert_many(batch)
             # Write logs
-            audit_log(params['mongo-gcp-url'], start_time, pd.to_datetime('now'), status="SUCCESS", action="insert", affected_rows=affected_rows)
+            audit_log(start_time, pd.to_datetime('now'), status="SUCCESS", action="insert", affected_rows=affected_rows)
 
         except Exception as ex:
             # Write logs
-            audit_log(params['mongo-gcp-url'], start_time, pd.to_datetime('now'), status="ERROR", error_message=str(ex), action="insert", affected_rows=affected_rows)
+            audit_log(start_time, pd.to_datetime('now'), status="ERROR", error_message=str(ex), action="insert", affected_rows=affected_rows)
             # Raise error
             raise Exception(str(ex))
         
 
 if __name__=='__main__':
-    load_parquet('./airflow/data/HuggingFace/lvis_caption_url.parquet')
     pass

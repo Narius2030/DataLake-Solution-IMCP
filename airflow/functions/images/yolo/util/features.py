@@ -1,27 +1,34 @@
-import cv2
-import numpy as np
-import tempfile
+import sys
+sys.path.append('./airflow')
+
+import torch
+from ultralytics.nn.tasks import attempt_load_one_weight
+from tensorflow.keras.preprocessing.image import load_img, img_to_array
+from functions.images.yolo.model.yolov8_extractor import YOLOv8DetectionAndFeatureExtractorModel
 
 
-def get_Net_yolov4(cfg_file, weight_file):
-    net = cv2.dnn.readNet(cfg_file, weight_file)
-    return net
+def get_yolov8_extractor(model_name="yolov8m.pt"):
+    ckpt = None
+    model_name_or_path = model_name
+    if str(model_name_or_path).endswith('.pt'):
+        _, ckpt = attempt_load_one_weight(model_name_or_path)
+        cfg = ckpt['model'].yaml
+    else:
+        cfg = model_name_or_path
+
+    model = YOLOv8DetectionAndFeatureExtractorModel(cfg, nc=None, verbose=True)
+    return model
 
 
 # Trích xuất đặc trưng từ YOLO
-def extract_yolo_features(net, img_response):
-    layer_names = net.getLayerNames()
-    output_layers = [layer_names[i - 1] for i in net.getUnconnectedOutLayers()]
-    img_array = np.frombuffer(img_response, np.uint8)
-    img = cv2.imdecode(img_array, cv2.IMREAD_COLOR)
-    # img = cv2.imread(img_path)
-    if img is None:
-        raise ValueError(f"Không thể đọc ảnh từ response")
-    
-    blob = cv2.dnn.blobFromImage(img, 0.00392, (416, 416), (0, 0, 0), True, crop=False)
-    net.setInput(blob)
-    outs = net.forward(output_layers)
-    
-    # Làm phẳng từng phần tử của `outs` và kết hợp thành một mảng duy nhất
-    yolo_features = np.concatenate([out.flatten() for out in outs], axis=0)
+def extract_yolo_features(img_path, model):
+    image = load_img(img_path, target_size=(640, 640))
+    image_array = img_to_array(image)
+    image_array = image_array.reshape((1, image_array.shape[2], image_array.shape[0], image_array.shape[1]))
+    image_tensor = torch.from_numpy(image_array)
+
+    image_tensor = image_tensor.type(torch.float32)
+    features, _ = model.custom_forward(image_tensor)
+
+    yolo_features = features.detach().numpy().flatten()
     return yolo_features
