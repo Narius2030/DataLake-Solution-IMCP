@@ -10,4 +10,4 @@
 /airflow/logs/**
 /airflow/functions/images/yolo/model/**
 /yolov8m.pt
-/.env
+.env
