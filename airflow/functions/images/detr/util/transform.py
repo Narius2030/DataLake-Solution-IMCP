@@ -10,9 +10,7 @@ def reshape(image_response):
         T.ToTensor(),
         T.Normalize([0.485, 0.456, 0.406], [0.229, 0.224, 0.225])
     ])
-    image = Image.open(BytesIO(image_response))
-    if image.mode != "RGB":
-        image = image.convert("RGB")
+    image = Image.open(BytesIO(image_response)).convert("RGB")
     return transform(image).unsqueeze(0)
 
 # To remove punctuations

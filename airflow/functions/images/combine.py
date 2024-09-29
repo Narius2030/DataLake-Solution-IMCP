@@ -10,12 +10,10 @@ import requests
 def combine_yolo_detr(image_path, yolo_model, detr_model):
     response = requests.get(image_path, timeout=1)
     # Trích xuất đặc trưng từ YOLO
-    yolo_features = extract_yolo_features(yolo_model, response.content)
-    yolov4_encode = yolo_features
+    yolo_features = extract_yolo_features(response.content, yolo_model)
 
     # Trích xuất đặc trưng từ DETR
     image_tensor = reshape(response.content)
     detr_features = extract_detr_features(image_tensor, detr_model)
-    detr_encode = detr_features
 
-    return yolov4_encode, detr_encode
+    return yolo_features, detr_features

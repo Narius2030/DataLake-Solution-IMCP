@@ -9,3 +9,5 @@
 /airflow/standalone_admin_password.txt
 /airflow/logs/**
 /airflow/functions/images/yolo/model/**
+/yolov8m.pt
+/.env

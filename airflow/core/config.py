@@ -3,7 +3,7 @@ import os
 from pathlib import Path
 from dotenv import load_dotenv
 from pydantic_settings import BaseSettings
-sys.path.append('./')
+
 env_path = Path(".") / ".env"
 load_dotenv(dotenv_path=env_path)
 

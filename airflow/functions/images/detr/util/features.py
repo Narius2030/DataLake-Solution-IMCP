@@ -17,6 +17,5 @@ def extract_detr_features(image_tensor, model):
         outputs = model(image_tensor)
     
     # Trích xuất đặc trưng từ output của DETR panoptic
-    pred_boxes = outputs['pred_boxes'].squeeze().numpy().flatten()
-    
-    return pred_boxes
+    bbox_attention = outputs['bbox_attention'].squeeze().numpy().flatten()
+    return bbox_attention
