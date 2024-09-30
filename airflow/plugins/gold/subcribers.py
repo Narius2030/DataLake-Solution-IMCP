@@ -14,7 +14,12 @@ def write_json_logs(message, path, topic, partition):
             for data in datas:
                 value = data.value.decode('utf-8')
                 value = json.loads(value)
-                with open(f"{path}/{topic}_{date.today()}_{partition}.pkl", "ab") as file:
-                    pickle.dump(value, file)
+                # read existing file and update key-value pairs with new values
+                with open(f"{path}/{topic}_{date.today()}_{partition}.pkl", 'rb') as file:
+                    data = pickle.load(file)
+                data.update(value)
+                # write updated data into pkl again
+                with open(f"{path}/{topic}_{date.today()}_{partition}.pkl", "wb") as file:
+                    pickle.dump(data, file)
         except Exception as exc:
             raise Exception(str(exc))

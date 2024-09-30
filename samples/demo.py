@@ -20,12 +20,7 @@ if __name__ == '__main__':
     
     with open('./logs/yolov8_2024-09-30_0.pkl', 'rb') as file:
         data = pickle.load(file)
-        print(data.keys())
-        
-    with open('./logs/yolov8_2024-09-30_1.pkl', 'rb') as file:
-        data = pickle.load(file)
-        print(data.keys())
-        # print(data['http://images.cocodataset.org/train2017/000000000094.jpg'])
+        print(data)
     
     
     
