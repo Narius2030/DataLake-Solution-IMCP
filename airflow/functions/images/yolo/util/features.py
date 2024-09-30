@@ -5,7 +5,7 @@ import torch
 from PIL import Image
 from io import BytesIO
 from ultralytics.nn.tasks import attempt_load_one_weight
-from tensorflow.keras.preprocessing.image import load_img, img_to_array
+from tensorflow.keras.preprocessing.image import img_to_array
 from functions.images.yolo.model.yolov8_extractor import YOLOv8DetectionAndFeatureExtractorModel
 
 

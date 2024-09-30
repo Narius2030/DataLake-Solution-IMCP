@@ -9,7 +9,7 @@ from functions.images.detr.util.features import get_detr_model
 from functions.images.yolo.util.features import get_yolov8_extractor
 
 
-yolo_model = get_yolov8_extractor(model_name='yolov8m.pt')
+yolo_model = get_yolov8_extractor(model_name='./airflow/functions/images/yolo/model/yolov8m.pt')
 detr_model, _ = get_detr_model(pretrained=True)
 
 class Producer(threading.Thread):

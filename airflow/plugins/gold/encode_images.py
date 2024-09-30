@@ -3,7 +3,6 @@ sys.path.append('./airflow')
 
 from publishers import encode_detr, encode_yolov8
 from subcribers import write_json_logs
-from functions.images.combine import combine_yolo_detr
 from functions.transporter.KafkaComponents import Producer, Consumer
 from core.config import get_settings
 import pymongo
@@ -38,7 +37,7 @@ def transport(batch):
         
         for t in cons_tasks:
             t.start()
-        time.sleep(10)      # TODO: deal with time.sleep - make it more flexibile
+        time.sleep(10)       # TODO: deal with time.sleep - make it more flexibile
         for task in cons_tasks:
             task.stop()
             
@@ -46,21 +45,21 @@ def transport(batch):
             task.join()
         for task in cons_tasks:
             task.join()
-        print("Transporting threads have stopped ✔")
+        print("Batch transporting threads have stopped ✔")
         
     except Exception as exc:
         print(str(exc) + '❌')
 
 
-def encode_yolov8_detr():
+def encode_yolov8_detr(batch:int, total_num:int):
     # Khởi tạo một dictionary để lưu trữ các đặc trưng của ảnh
     with pymongo.MongoClient(settings.DATABASE_URL) as client:
         db = client['imcp']
         documents = db['refined'].find({'url': {'$exists': True}}, {'url': 1, '_id': 0}) \
-                                .batch_size(10) \
+                                .batch_size(batch) \
                                 .sort('url', pymongo.ASCENDING) \
-                                .limit(100)
-        for i in range(20 // 5 + 1):
+                                .limit(total_num)
+        for i in range(total_num // batch + 1):
             batch_data = []
             caches = {}
             for doc in tqdm(documents):
@@ -93,6 +92,6 @@ def encode_yolov8_detr():
             
             
 if __name__=='__main__':
-    # encode_yolov8_detr()
+    encode_yolov8_detr(10, 100)
     pass
                  
