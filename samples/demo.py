@@ -14,10 +14,18 @@ def load_parquet(params):
     
 
 if __name__ == '__main__':
-    params = {
-        'file-path': './airflow/data/HuggingFace/lvis_caption_url.parquet',
-        'engine': 'pyarrow'
-    }
-    load_parquet(params)
+    import numpy as np
+    import pickle
+    import json
+    
+    with open('./logs/yolov8_2024-09-30_0.pkl', 'rb') as file:
+        data = pickle.load(file)
+        print(data.keys())
+        
+    with open('./logs/yolov8_2024-09-30_1.pkl', 'rb') as file:
+        data = pickle.load(file)
+        print(data.keys())
+        # print(data['http://images.cocodataset.org/train2017/000000000094.jpg'])
+    
     
     

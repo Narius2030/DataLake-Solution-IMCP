@@ -16,28 +16,28 @@ import json
 
 settings = get_settings()
 
-def transport(batch):
+def transport(batch, partition):
     prod_tasks = [
         Producer(topic="yolov8", batch=batch, generator=encode_yolov8, key='yolo'),
         Producer(topic="detr", batch=batch, generator=encode_detr, key='detr'),
     ]
     
     cons_tasks = [
-        Consumer(topic="yolov8", group_id='yolo', path='./logs', function=write_json_logs),
-        Consumer(topic="detr", group_id='detr', path='./logs', function=write_json_logs),
+        Consumer(topic="yolov8", group_id='yolo', path='./logs', function=write_json_logs, partition=partition),
+        Consumer(topic="detr", group_id='detr', path='./logs', function=write_json_logs, partition=partition),
     ]
     try:
         print("Transporting threads have been starting...")
         # Start threads and Stop threads
         for t in prod_tasks:
             t.start()
-        # time.sleep(120)     # TODO: deal with time.sleep - make it more flexibile
-        # for task in prod_tasks:
-        #     task.stop()
+        time.sleep(30)     # TODO: deal with time.sleep - make it more flexibile
+        for task in prod_tasks:
+            task.stop()
         
         for t in cons_tasks:
             t.start()
-        time.sleep(10)       # TODO: deal with time.sleep - make it more flexibile
+        time.sleep(30)       # TODO: deal with time.sleep - make it more flexibile
         for task in cons_tasks:
             task.stop()
             
@@ -69,17 +69,17 @@ def encode_yolov8_detr(batch:int, total_num:int):
                     image_repsonse = requests.get(image_url, timeout=1)
                     caches[image_url] = image_repsonse
                 except Exception:
-                    for _ in range(0, 2):
+                    for attempt in range(0, 2):
                         try:
                             image_repsonse = requests.get(image_url, timeout=1)
                             caches[image_url] = image_repsonse
                             break  # Thành công, thoát khỏi vòng lặp thử lại
                         except Exception as e:
-                            # print(f"Tải lại dữ liệu từ {doc['url']} (lần {attempt+1}/{2}): {e}")
+                            print(f"Tải lại dữ liệu từ {doc['url']} (lần {attempt+1}/{2}): {e}")
                             time.sleep(2)  # Chờ đợi trước khi thử lại
-                if len(batch_data) == 5:
+                if len(batch_data) == batch:
                     print('============> Batch', i+1)
-                    transport(batch=caches)
+                    transport(batch=caches, partition=i)
                     break
             
     
@@ -92,6 +92,6 @@ def encode_yolov8_detr(batch:int, total_num:int):
             
             
 if __name__=='__main__':
-    encode_yolov8_detr(10, 100)
+    encode_yolov8_detr(5, 20)
     pass
                  
