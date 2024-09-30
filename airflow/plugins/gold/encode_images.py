@@ -82,14 +82,6 @@ def encode_yolov8_detr(batch:int, total_num:int):
                     transport(batch=caches, partition=i)
                     break
             
-    
-    # # savae embeddings to pkl
-    # with open(f"./airflow/data/HuggingFace/yolo_embedding.pkl", 'wb') as f:
-    #     pickle.dump(yolo_caches, f)
-        
-    # with open(f"./airflow/data/HuggingFace/detr_embedding.pkl", 'wb') as f:
-    #     pickle.dump(detr_caches, f)
-            
             
 if __name__=='__main__':
     encode_yolov8_detr(5, 20)
