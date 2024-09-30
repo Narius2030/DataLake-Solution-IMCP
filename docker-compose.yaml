@@ -11,17 +11,24 @@ services:
       - "8081:8080"
     command: airflow standalone
 
-  # MongoDB setup
-  # mongo:
-  #   image: mongo
-  #   container_name: mongodb
-  #   ports:
-  #     - 27017:27017
-  #   environment:
-  #     MONGO_INITDB_ROOT_USERNAME: admin
-  #     MONGO_INITDB_ROOT_PASSWORD: nhanbui
-  #   volumes:
-  #     - ./data/mongodb/:/data/mongodb/
+  zookeeper:
+    image: wurstmeister/zookeeper:latest
+    ports:
+      - "2181:2181"
+
+  kafka-broker-1:
+    image: wurstmeister/kafka:latest
+    mem_limit: '5g'
+    ports:
+      - "9092:9092"
+    environment:
+      KAFKA_BROKER_ID: 0
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://localhost:9092
+      KAFKA_ZOOKEEPER_CONNECT: zookeeper:2181
+      KAFKA_LISTENERS: PLAINTEXT://:9092
+      KAFKA_MESSAGE_MAX_BYTES: 524288000
+      KAFKA_MAX_PARTITION_FETCH_BYTES: 524288000
+      KAFKA_FETCH_MAX_BYTES: 524288000
 
 networks:
   elasticnet: {}
