@@ -11,3 +11,4 @@
 /airflow/functions/images/yolo/model/**
 /yolov8m.pt
 .env
+logs/**

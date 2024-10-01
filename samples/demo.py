@@ -17,10 +17,17 @@ if __name__ == '__main__':
     import numpy as np
     import pickle
     import json
+
     
-    with open('./logs/yolov8_2024-09-30_0.pkl', 'rb') as file:
+    with open("./logs/detr_2024-10-01.pkl", "rb") as file:
         data = pickle.load(file)
-        print(data)
+        print(len(data.keys()))
+        print(len(data['http://images.cocodataset.org/train2017/000000000247.jpg']))
+    print('\n')
+    with open("./logs/yolo_2024-10-01.pkl", "rb") as file:
+        data = pickle.load(file)
+        print(data.keys())
+        print(len(data['http://images.cocodataset.org/train2017/000000000247.jpg']))
     
     
     

@@ -1,16 +1,14 @@
 import sys
 sys.path.append('./airflow')
 
-from publishers import encode_detr, encode_yolov8
-from subcribers import write_json_logs
+from publishers import send_images_bytes
+from subcribers import encode_detr, encode_yolov8
 from functions.transporter.KafkaComponents import Producer, Consumer
 from core.config import get_settings
 import pymongo
 from tqdm import tqdm
-import pickle
 import time
 import requests
-import json
 
 
 
@@ -18,26 +16,29 @@ settings = get_settings()
 
 def transport(batch, partition):
     prod_tasks = [
-        Producer(topic="yolov8", batch=batch, generator=encode_yolov8, key='yolo'),
-        Producer(topic="detr", batch=batch, generator=encode_detr, key='detr'),
+        Producer(topic="embeddings", batch=batch, generator=send_images_bytes),
     ]
     
     cons_tasks = [
-        Consumer(topic="yolov8", group_id='yolo', path='./logs', function=write_json_logs, partition=partition),
-        Consumer(topic="detr", group_id='detr', path='./logs', function=write_json_logs, partition=partition),
+        Consumer(topic="embeddings", group_id='yolo', path='./logs', function=encode_yolov8, partition=partition),
+        Consumer(topic="embeddings", group_id='detr', path='./logs', function=encode_detr, partition=partition),
     ]
     try:
-        print("Transporting threads have been starting...")
+        print("Transporting threads have been starting...\n")
         # Start threads and Stop threads
         for t in prod_tasks:
             t.start()
-        time.sleep(30)     # TODO: deal with time.sleep - make it more flexibile
+        # while not all(t.is_stop() for t in prod_tasks):
+        #     pass
+        time.sleep(2)
         for task in prod_tasks:
             task.stop()
         
         for t in cons_tasks:
             t.start()
-        time.sleep(30)       # TODO: deal with time.sleep - make it more flexibile
+        # while not all(t.is_stop() for t in cons_tasks):
+        #     pass
+        time.sleep(10)
         for task in cons_tasks:
             task.stop()
             
@@ -45,7 +46,7 @@ def transport(batch, partition):
             task.join()
         for task in cons_tasks:
             task.join()
-        print("Batch transporting threads have stopped ✔")
+        print("Batch transporting threads have stopped ✔ \n")
         
     except Exception as exc:
         print(str(exc) + '❌')
@@ -84,6 +85,6 @@ def encode_yolov8_detr(batch:int, total_num:int):
             
             
 if __name__=='__main__':
-    encode_yolov8_detr(5, 20)
+    encode_yolov8_detr(5, 100)
     pass
                  
