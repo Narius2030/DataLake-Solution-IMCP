@@ -4,12 +4,7 @@ sys.path.append('./airflow')
 from json import dumps
 import threading
 from kafka import KafkaProducer, KafkaConsumer
-from functions.images.detr.util.features import get_detr_model
-from functions.images.yolo.util.features import get_yolov8_extractor
 
-
-yolo_model = get_yolov8_extractor(model_name='./airflow/functions/images/yolo/model/yolov8m.pt')
-detr_model, _ = get_detr_model(pretrained=True)
 
 class Producer(threading.Thread):
     def __init__(self, topic:str, batch:dict, key:str=None, generator=None):
@@ -67,16 +62,12 @@ class Consumer(threading.Thread):
                                  max_partition_fetch_bytes=524288000)
         consumer.subscribe([self.topic])
         
-        if self.group_id == 'detr':
-            model = detr_model
-        else:
-            model = yolo_model
         while not self.stop_event.is_set():
             message = consumer.poll(timeout_ms=1000)
             # Processing Function
             if not message:
                 continue
-            self.function(message, self.path, self.group_id, self.partition, model)
+            self.function(message, self.path, self.group_id)
             # Termination Event
             if self.stop_event.is_set():
                 break

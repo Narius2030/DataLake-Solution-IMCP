@@ -2,7 +2,7 @@ import sys
 sys.path.append('./airflow')
 
 from functions.images.detr.util.features import extract_detr_features
-from functions.images.yolo.util.features import extract_yolo_features
+from functions.images.yolo.features import extract_yolo_features
 from functions.images.detr.util.transform import reshape
 import requests
 
