@@ -31,7 +31,7 @@ def normalize_caption():
     # create a local SparkSession
     spark = SparkSession.builder \
                 .config("spark.jars.packages", "org.mongodb.spark:mongo-spark-connector_2.12:3.0.1") \
-                .config("spark.driver.maxResultSize", "1g") \
+                .config("spark.driver.maxResultSize", "2g") \
                 .config("spark.network.timeout", "300s") \
                 .config("spark.executor.heartbeatInterval", "120s") \
                 .config("spark.executor.memory", "4g") \
@@ -43,7 +43,7 @@ def normalize_caption():
     bronze_df = spark.read.format("com.mongodb.spark.sql.DefaultSource") \
                         .option('spark.mongodb.input.uri', settings.DATABASE_URL) \
                         .option('spark.mongodb.input.database', 'imcp') \
-                        .option('spark.mongodb.input.collection', 'raw') \
+                        .option('spark.mongodb.input.collection', 'huggingface') \
                         .load()
 
     start_time = pd.to_datetime('now')
@@ -55,6 +55,7 @@ def normalize_caption():
         temp_rmp = remove_punctuations(temp_lwc)
         temp_tok = tokenize_caption(temp_rmp)
         silver_df = scaling(temp_tok)
+        print('silver shape:', silver_df.count())
         # insert to mongodb
         silver_df.write.format("com.mongodb.spark.sql.DefaultSource") \
                 .option('spark.mongodb.output.uri', settings.DATABASE_URL) \
@@ -96,5 +97,4 @@ def normalize_caption():
 
 
 if __name__=='__main__':
-    # normalize_caption()
-    pass
+    normalize_caption()

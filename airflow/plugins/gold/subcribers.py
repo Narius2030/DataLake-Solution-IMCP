@@ -12,7 +12,7 @@ from functions.images.detr.util.features import extract_detr_features
 from functions.images.yolo.yolov8_encoder import YOLOFeatureExtractor
 
 
-yolo_extractor = YOLOFeatureExtractor('yolov8n.pt')
+yolo_extractor = YOLOFeatureExtractor('./airflow/functions/images/yolo/model/yolov8n.pt')
 
 def encode_yolov8(message, path, topic):
     print("write logs yolo\n")

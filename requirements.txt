@@ -1,6 +1,6 @@
 # orchestration
-apache-airflow-providers-apache-spark==4.8.0
-apache-airflow
+# apache-airflow-providers-apache-spark==4.8.0
+# apache-airflow
 
 # model
 cython
@@ -20,3 +20,4 @@ pymongo
 pyspark
 python-dotenv
 pydantic_settings
+minio
