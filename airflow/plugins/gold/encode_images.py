@@ -12,45 +12,12 @@ import time
 import requests
 import base64
 from functions.images.yolo.yolov8_encoder import YOLOFeatureExtractor
-from functions.storage.operators import MinioStorageOperator
+from functions.operators.storage import MinioStorageOperator
 
 
 settings = get_settings()
 yolo_extractor = YOLOFeatureExtractor('./airflow/functions/images/yolo/model/yolov8n.pt')
 minio_operator = MinioStorageOperator(endpoint='116.118.50.253:9000', access_key='minio', secret_key='minio123')
-
-
-def transport(batch):
-    prod_tasks = [
-        Producer(topic="embeddings", batch=batch, generator=send_images_bytes),
-    ]
-    
-    cons_tasks = [
-        Consumer(topic="embeddings", group_id='yolo', path='./logs', function=encode_yolov8),
-        Consumer(topic="embeddings", group_id='yolo', path='./logs', function=encode_yolov8),
-    ]
-    try:
-        print("Transporting threads have been starting...\n")
-        # Start threads and Stop threads
-        for t in prod_tasks:
-            t.start()
-        time.sleep(2)
-        for task in prod_tasks:
-            task.stop()
-        for t in cons_tasks:
-            t.start()
-        time.sleep(10)
-        for task in cons_tasks:
-            task.stop()
-            
-        for task in prod_tasks:
-            task.join()
-        for task in cons_tasks:
-            task.join()
-        print("Batch transporting threads have stopped ✔ \n")
-        
-    except Exception as exc:
-        print(str(exc) + '❌')
 
 
 def embedding(batch):
@@ -102,7 +69,6 @@ def encoding_data(batch:int, total_num:int):
                 if len(batch_data) == batch:
                     print('============> Batch', i+1)
                     embedding(batch=caches)
-                    # transport(batch=caches)
                     break
                 
                 

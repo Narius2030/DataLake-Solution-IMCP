@@ -7,8 +7,6 @@ import pickle
 import os
 import base64
 from tqdm import tqdm
-from functions.images.detr.util.transform import reshape
-from functions.images.detr.util.features import extract_detr_features
 from functions.images.yolo.yolov8_encoder import YOLOFeatureExtractor
 
 
@@ -36,30 +34,5 @@ def encode_yolov8(message, path, topic):
                     features.update(temp)
                 # write updated data into pkl again
                 yolo_extractor.save_feature(features, path, f"{topic}_{date.today()}.pkl")
-        except Exception as exc:
-            raise Exception(str(exc))
-
-
-def encode_detr(message, path, topic, detr_model):
-    print("write logs detr\n")
-    features = {}
-    for _, datas in tqdm(message.items()):
-        try:
-            for data in datas:
-                value = data.value.decode('utf-8')
-                value = json.loads(value)
-                
-                image_response = base64.b64decode(list(value.values())[0].encode('utf-8'))
-                image_tensor = reshape(image_response)
-                detr_features = extract_detr_features(image_tensor, detr_model)
-                features[list(value.keys())[0]] = detr_features.tolist()
-                # read existing file and update key-value pairs with new values
-                if os.path.exists(f"{path}/{topic}_{date.today()}.pkl"):
-                    with open(f"{path}/{topic}_{date.today()}.pkl", 'rb') as file:
-                        temp = pickle.load(file)
-                    features.update(temp)
-                # write updated data into pkl again
-                with open(f"{path}/{topic}_{date.today()}.pkl", "wb") as file:
-                    pickle.dump(features, file)
         except Exception as exc:
             raise Exception(str(exc))

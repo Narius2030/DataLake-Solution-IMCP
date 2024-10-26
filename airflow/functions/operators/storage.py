@@ -27,9 +27,7 @@ class GoogleStorageOperator():
         print(f"Bucket {bucket.name} is now publicly readable")
 
 
-    def upload_blob(
-        self, bucket_name, source_file_name, destination_blob_name, content_type
-    ):
+    def upload_blob(self, bucket_name, source_file_name, destination_blob_name):
         """Uploads a file to the bucket."""
         
         bucket = self.storage_client.bucket(bucket_name)
@@ -42,9 +40,7 @@ class GoogleStorageOperator():
         print(f"File {source_file_name} uploaded to {destination_blob_name}.")
         
 
-    def upload_many_blobs(
-        self, bucket_name, filenames, source_directory="./data", workers=8
-    ):
+    def upload_many_blobs(self, bucket_name, filenames, source_directory="./data", workers=8):
         """Upload every file in a list to a bucket, concurrently in a process pool.
 
         Each blob name is derived from the filename, not including the
@@ -55,7 +51,7 @@ class GoogleStorageOperator():
 
         bucket = self.storage_client.bucket(bucket_name)
 
-        results = transfer_manager.upload_many_from_filenames(bucket, filenames, source_directory=source_directory, max_workers=workers, content_type=content_type)
+        results = transfer_manager.upload_many_from_filenames(bucket, filenames, source_directory=source_directory, max_workers=workers)
 
         for name, result in zip(filenames, results):
             # The results list is either `None` or an exception for each filename in
