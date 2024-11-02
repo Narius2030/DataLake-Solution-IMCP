@@ -2,7 +2,8 @@ from google.cloud.storage import Client, transfer_manager
 from typing import List
 from minio import Minio
 from minio.error import S3Error
-
+import requests
+import io
 
 
 class GoogleStorageOperator():
@@ -122,3 +123,39 @@ class MinioStorageOperator:
                 print(f"Bucket {bucket_name} đã tồn tại.")
         except S3Error as e:
             print(f"Lỗi khi tạo bucket: {str(e)}")
+        
+    def upload_object_bytes(self, objec_data, bucket_name:str, object_name:str, content_type:str):
+        """
+        Upload đối tượng dưới dạng bytes từ một đường dẫn URL
+
+        :param url: đường dẫn gốc của đối tượng trên internet
+        :param bucket_name: tên bucket
+        :param object_name: đường dẫn tới tên của đối tượng trên MinIO
+        """
+        # image_bytes = io.BytesIO(objec_data)
+        # Upload dữ liệu từ BytesIO lên MinIO
+        try:
+            self.client.put_object(
+                bucket_name = bucket_name,
+                object_name = object_name,
+                data = objec_data,
+                length = objec_data.getbuffer().nbytes,
+                content_type=content_type
+            )
+            print(f"Successfully uploaded {object_name} to {bucket_name}!")
+        except S3Error as err:
+            print(f"Error uploading file: {err}")
+            
+    def load_object_bytes(self, bucket_name:str, object_name:str, version_id=None):
+        """Lấy Object từ MinIO dưới dạng byte stream."""
+        try:
+            # Lấy đối tượng từ MinIO dưới dạng byte stream
+            response  = self.client.get_object(bucket_name, object_name, version_id=version_id)
+            
+             # Đọc toàn bộ nội dung object vào biến byte stream
+            data = response.read()
+            print(f"Object size: {len(data)} bytes")
+            return data
+        except Exception as e:
+            print(f"Error loading object from MinIO: {str(e)}")
+            return None
