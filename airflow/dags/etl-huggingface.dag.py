@@ -4,8 +4,9 @@ from airflow import DAG
 from airflow.utils.dates import days_ago
 from airflow.models import Variable
 from airflow.operators.python_operator import PythonOperator
-from bronze.load import load_parquet
-
+from load_raw import load_raw_collection
+from load_refined import load_refined_data
+from load_business_data import load_encoded_data
 
 # Static Function
 def start():
@@ -14,10 +15,6 @@ def start():
 def end():
     print('Finish at {}!'.format(datetime.today().date()))
 
-
-with open("/opt/airflow/config/env.json", "r") as file:
-    config = json.load(file)
-    mongo_url = config['MONGO_ATLAS_PYTHON_GCP']
 
 
 # DAGs
@@ -33,14 +30,27 @@ with DAG(
         dag = dag
     )
     
-    bronze_huggface = PythonOperator(
+    bronze_huggingface = PythonOperator(
         task_id = 'ingest_raw_data',
         params = {
-            'file-path': Variable.get('huggingface_parquet_path'),
+            'bucket_name': Variable.get('bucket_name'),
+            'file_path': Variable.get('raw_data_path'),
             'engine': 'pyarrow',
-            'mongo-gcp-url': Variable.get('mongo_gcp_url')
+            'mongo-url': Variable.get('MONGO_ATLAS_PYTHON')
         },
-        python_callable = load_parquet,
+        python_callable = load_raw_collection,
+        dag = dag
+    )
+    
+    silver_huggingface = PythonOperator(
+        task_id = 'refine_raw_data',
+        python_callable = load_refined_data,
+        dag = dag
+    )
+    
+    gold_huggingface = PythonOperator(
+        task_id = 'extract_image_feature',
+        python_callable = load_encoded_data,
         dag = dag
     )
     
@@ -52,5 +62,5 @@ with DAG(
 
 
 # Workflow
-print_start >> bronze_huggface >> print_end
+print_start >> bronze_huggingface >> silver_huggingface >> print_end
     

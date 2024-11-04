@@ -1,26 +1,15 @@
-FROM apache/airflow:2.9.1-python3.11
+FROM apache/airflow:2.9.2-python3.11
+
+# ENV AIRFLOW__WEBSERVER__SECRET_KEY=buiducnhan15122003
 
 USER root
-
-# Install ant
 RUN apt update && \
-    apt-get install -y ant && \
+    apt-get -y install libpq-dev gcc && \
+    apt-get update && apt-get install ffmpeg libsm6 libxext6  -y && \
     apt-get clean;
-
-# Downloading gcloud package
-RUN  curl https://dl.google.com/dl/cloudsdk/release/google-cloud-sdk.tar.gz > /tmp/google-cloud-sdk.tar.gz
-# Installing the package
-RUN mkdir -p /usr/local/gcloud \
-    && tar -C /usr/local/gcloud -xvf /tmp/google-cloud-sdk.tar.gz \
-    && /usr/local/gcloud/google-cloud-sdk/install.sh
-
-# Adding the package path to local
-ENV PATH $PATH:/usr/local/gcloud/google-cloud-sdk/bin
-
 
 USER airflow
 
-COPY requirements.txt .
+COPY ./requirements.txt .
 
-RUN pip install --no-cache-dir -r requirements.txt
-RUN rm requirements.txt
+RUN pip install --no-cache-dir -r ./requirements.txt

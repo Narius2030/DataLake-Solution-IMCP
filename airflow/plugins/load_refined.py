@@ -1,5 +1,5 @@
 import sys
-sys.path.append('./airflow')
+sys.path.append('/opt/airflow')
 
 import pandas as pd
 import polars as pl
@@ -16,8 +16,10 @@ from utils.images.yolov8_encoder import YOLOFeatureExtractor
 
 settings = get_settings()
 mongo_operator = MongoDBOperator('imcp', settings.DATABASE_URL)
-yolo_extractor = YOLOFeatureExtractor('./airflow/functions/images/yolo/model/yolov8n.pt')
-minio_operator = MinioStorageOperator(endpoint='116.118.50.253:9000', access_key='minio', secret_key='minio123')
+yolo_extractor = YOLOFeatureExtractor('/opt/airflow/functions/images/yolo/model/yolov8n.pt')
+minio_operator = MinioStorageOperator(endpoint=f'{settings.MINIO_HOST}:{settings.MINIO_PORT}',
+                                    access_key=settings.MINIO_USER,
+                                    secret_key=settings.MINIO_PASSWD)
 
 
 def load_refined_data():

@@ -39,7 +39,7 @@ class MongoDBOperator():
     def data_generator(self, collection:str, batch_size:int=10000, limit:int=100000):
         with pymongo.MongoClient(self.__connstr) as client:
             db = client[self.dbname]
-            documents = db[collection].find({}).batch_size(batch_size).limit(limit)
+            documents = db[collection].find({}, {}).batch_size(batch_size).limit(limit)
             batch = []
             for doc in documents:
                 batch.append(doc)
