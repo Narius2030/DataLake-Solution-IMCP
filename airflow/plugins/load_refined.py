@@ -16,7 +16,7 @@ from utils.images.yolov8_encoder import YOLOFeatureExtractor
 
 settings = get_settings()
 mongo_operator = MongoDBOperator('imcp', settings.DATABASE_URL)
-yolo_extractor = YOLOFeatureExtractor('/opt/airflow/functions/images/yolo/model/yolov8n.pt')
+yolo_extractor = YOLOFeatureExtractor(f'{settings.WORKING_DIRECTORY}/utils/images/model/yolov8n.pt')
 minio_operator = MinioStorageOperator(endpoint=f'{settings.MINIO_HOST}:{settings.MINIO_PORT}',
                                     access_key=settings.MINIO_USER,
                                     secret_key=settings.MINIO_PASSWD)

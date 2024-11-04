@@ -6,7 +6,7 @@ from airflow.models import Variable
 from airflow.operators.python_operator import PythonOperator
 from load_raw import load_raw_collection
 from load_refined import load_refined_data
-from load_business_data import load_encoded_data
+from load_business_data import load_encoded_data, load_image_storage
 
 # Static Function
 def start():
@@ -54,6 +54,12 @@ with DAG(
         dag = dag
     )
     
+    upload_features = PythonOperator(
+        task_id = 'extract_image_feature',
+        python_callable = load_image_storage,
+        dag = dag
+    )
+    
     print_end = PythonOperator(
         task_id = 'ending_integration',
         python_callable = start,
@@ -62,5 +68,5 @@ with DAG(
 
 
 # Workflow
-print_start >> bronze_huggingface >> silver_huggingface >> print_end
+print_start >> bronze_huggingface >> silver_huggingface >> gold_huggingface >> upload_features >> print_end
     
