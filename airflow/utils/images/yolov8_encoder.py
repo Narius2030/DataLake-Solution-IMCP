@@ -23,9 +23,9 @@ class YOLOFeatureExtractor():
     def cv2_read_image(self, image_bytes):
         image_array = np.asarray(bytearray(image_bytes), dtype=np.uint8)
         # Đọc ảnh bằng OpenCV
-        image = cv2.imdecode(image_array, cv2.IMREAD_COLOR)
+        image_rgb = cv2.imdecode(image_array, cv2.IMREAD_COLOR)
         # Chuyển đổi từ BGR (OpenCV) sang RGB
-        image_rgb = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
+        # image_rgb = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
         return image_rgb
 
     def preprocess_image(self, image):

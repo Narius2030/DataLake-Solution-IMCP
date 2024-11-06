@@ -4,6 +4,7 @@
 /data/mongodb/**
 /airflow/airflow.cfg
 /airflow/airflow.db
+/airflow/airflow.db-journal
 /airflow/airflow-webserver.pid
 /airflow/webserver_config.py
 /airflow/standalone_admin_password.txt
@@ -12,3 +13,5 @@
 /yolov8n.pt
 .env
 logs/**
+/airflow/utils/images/model/*.pt
+/airflow/data/**

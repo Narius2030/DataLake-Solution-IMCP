@@ -63,40 +63,7 @@ def load_refined_data():
             Number of rows were inserted: {}
             ===========================================================
         ''', affected_rows)
-
-
-def upload_image(image_matrix, image_name):
-    # Bước 1: Chuyển đổi ma trận ảnh sang byte
-    _, encoded_image = cv2.imencode('.jpg', image_matrix)
-    image_bytes = io.BytesIO(encoded_image)
-    minio_operator.upload_object_bytes(image_bytes, 'mlflow', f'/refined_images/{image_name}', "image/jpeg")
-
-def load_refined_image():
-    # Khởi tạo một dictionary để lưu trữ các đặc trưng của ảnh
-    for batch in mongo_operator.data_generator('huggingface'):
-        batch_data = []
-        for doc in batch:
-            batch_data.append(doc)
-            image_url = doc['url']
-            image_name = doc['url'][-16:]
-            print(image_name)
-            try:
-                image_repsonse = requests.get(image_url, timeout=1)
-                image_rgb = yolo_extractor.cv2_read_image(image_repsonse.content)
-                print(image_rgb.shape)
-                upload_image(image_rgb, image_name)
-            except Exception:
-                for attempt in range(0, 2):
-                    try:
-                        image_repsonse = requests.get(image_url, timeout=1)
-                        image_rgb = yolo_extractor.cv2_read_image(image_repsonse.content)
-                        upload_image(image_rgb, image_name)
-                        break  # Thành công, thoát khỏi vòng lặp thử lại
-                    except Exception as e:
-                        print(f"Tải lại dữ liệu từ {doc['url']} (lần {attempt+1}/{2}): {e}")
-                        time.sleep(2)  # Chờ đợi trước khi thử lại
             
 
 if __name__=='__main__':
-    # load_refined_data()
-    load_refined_image()
+    load_refined_data()

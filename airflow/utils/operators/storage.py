@@ -80,7 +80,7 @@ class MinioStorageOperator:
                 length = objec_data.getbuffer().nbytes,
                 content_type=content_type
             )
-            print(f"Successfully uploaded {object_name} to {bucket_name}!")
+            # print(f"Successfully uploaded {object_name} to {bucket_name}!")
         except S3Error as err:
             print(f"Error uploading file: {err}")
             
