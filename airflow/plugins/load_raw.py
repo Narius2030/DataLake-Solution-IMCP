@@ -53,19 +53,20 @@ def load_raw_collection(params):
     start_time = pd.to_datetime('now')
     affected_rows = 0
     try:
-        if mongo_operator.is_has_data('hugging_ace') == False:
+        if mongo_operator.is_has_data('huggingface') == False:
             warnings.warn("There is no documents in collection --> INGEST ALL")
             # If there is empty collection -> insert all
             affected_rows = mongo_operator.insert('hugging_ace', datasets)
         else:
             # If there are several documents -> check duplication -> insert one-by-one
             warnings.warn("There are documents in collection --> CHECK DUPLICATION")
-            mongo_operator.insert_many_not_duplication('huggin_face', datasets)
+            mongo_operator.insert_many_not_duplication('huggingface', datasets)
         # Write logs
-        mongo_operator.write_log('audit', start_time=start_time, status="SUCCESS", action="insert", affected_rows=affected_rows)
+        mongo_operator.write_log('huggingface', layer='bronze', start_time=start_time, status="SUCCESS", action="insert", affected_rows=affected_rows)
 
     except Exception as ex:
-        mongo_operator.write_log('audit', start_time=start_time, status="ERROR", error_message=str(ex), action="insert", affected_rows=affected_rows)
+        mongo_operator.write_log('huggingface', layer='bronze', start_time=start_time, status="ERROR", error_message=str(ex), action="insert", affected_rows=affected_rows)
+        raise Exception(str(ex))
         
 
 def load_raw_image(params):
