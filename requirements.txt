@@ -16,3 +16,4 @@ keras==3.3.3
 transformers
 opencv-python
 minio
+ijson
