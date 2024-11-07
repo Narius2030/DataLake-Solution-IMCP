@@ -22,19 +22,27 @@ minio_operator = MinioStorageOperator(endpoint=f'{settings.MINIO_HOST}:{settings
                                     secret_key=settings.MINIO_PASSWD)
 
 
+
+def get_latest_time():
+    latest_time = mongo_operator.find_latest_time('silver')
+    return latest_time
+
+
 def load_refined_data():
     start_time = pd.to_datetime('now')
     affected_rows = 0
+    latest_time = get_latest_time()
     try:
         for batch in mongo_operator.data_generator('huggingface'):
             data = list(batch)
             df = pl.DataFrame(data).drop('_id')
+            df = df.filter(pl.col('created_time') >= latest_time)
             lowered_df = df.with_columns(
                 *[pl.col(col).str.to_lowercase().alias(col) for col in ['caption','short_caption']]
             )
             cleaned_df = lowered_df.with_columns(
                 *[pl.col(col).map_elements(lambda x: clean_text(x), return_dtype=pl.String).alias(col) for col in ['caption','short_caption']],
-                pl.format("{}/raw_data/raw_images/{}", pl.lit(settings.MINIO_URL), pl.col("url").str.extract(r".*/(.*)")).alias("s3_url")
+                pl.format("{}/raw_data/raw_images/{}", pl.lit(settings.MINIO_URL), pl.col("url").str.extract(r".*/(.*)").str.slice(-16, None)).alias("s3_url")
             )
             tokenized_df = cleaned_df.with_columns(
                 *[ pl.col(col).map_elements(lambda x: tokenize(x), return_dtype=pl.List(pl.String)).alias(f'{col}_tokens') for col in ['caption','short_caption']]
@@ -45,25 +53,15 @@ def load_refined_data():
             
             affected_rows += len(data)
             print('SUCCESS with', len(data))
-    
         # Write logs
         mongo_operator.write_log('refined', layer='silver', start_time=start_time, status="SUCCESS", action="insert", affected_rows=affected_rows)
-        
     except Exception as exc:
         aggregate = [{'$sort': {'created_time': -1}}, {'$project': {'_id': 1}}]
         data = mongo_operator.find_data_with_aggregate('refined', aggregate)
         affected_rows = len(data)
         # Write logs
         mongo_operator.write_log('refined', layer='silver', start_time=start_time, status="ERROR", error_message=str(exc), action="insert", affected_rows=affected_rows)
-        
-        #Raise error
         raise Exception(str(exc))
-    
-    print('''
-            ===========================================================
-            Number of rows were inserted: {}
-            ===========================================================
-        ''', affected_rows)
             
 
 if __name__=='__main__':

@@ -7,6 +7,7 @@ import os
 import requests
 import cv2
 import time
+import polars as pl
 import io
 from tqdm import tqdm
 from core.config import get_settings
@@ -56,18 +57,49 @@ def load_raw_collection(params):
         if mongo_operator.is_has_data('huggingface') == False:
             warnings.warn("There is no documents in collection --> INGEST ALL")
             # If there is empty collection -> insert all
-            affected_rows = mongo_operator.insert('hugging_ace', datasets)
+            affected_rows = mongo_operator.insert('huggingface', datasets)
         else:
             # If there are several documents -> check duplication -> insert one-by-one
             warnings.warn("There are documents in collection --> CHECK DUPLICATION")
             mongo_operator.insert_many_not_duplication('huggingface', datasets)
         # Write logs
         mongo_operator.write_log('huggingface', layer='bronze', start_time=start_time, status="SUCCESS", action="insert", affected_rows=affected_rows)
-
     except Exception as ex:
         mongo_operator.write_log('huggingface', layer='bronze', start_time=start_time, status="ERROR", error_message=str(ex), action="insert", affected_rows=affected_rows)
         raise Exception(str(ex))
-        
+  
+  
+def load_raw_user_data():
+    start_time = pd.to_datetime('now')
+    affected_rows = 0
+    try:
+        for batch in mongo_operator.data_generator('user_data'):
+            data = list(batch)
+            df = pl.DataFrame(data, infer_schema_length=1000)
+            df = df.with_columns(
+                pl.lit('android').alias('publisher'),
+                pl.lit(f'{settings.MINIO_URL}').alias('howpublished'),
+                pl.col('manual_caption').alias('caption'),
+                pl.lit("").alias('short_caption')
+            )
+            df = df.drop(['predicted_caption','image_shape','manual_caption'])
+            print(df.shape)
+            # Load to mongodb
+            data = df.to_dicts()
+            mongo_operator.insert('huggingface', data)
+            affected_rows += len(data)
+            print('SUCCESS with', len(data))
+            break
+        # Write logs
+        mongo_operator.write_log('huggingface', layer='bronze', start_time=start_time, status="SUCCESS", action="insert", affected_rows=affected_rows)
+    except Exception as exc:
+        aggregate = [{'created_time': pd.to_datetime('now')}, {'$project': {'_id': 1}}]
+        data = mongo_operator.find_data_with_aggregate('refined', aggregate)
+        affected_rows = len(data)
+        # Write logs
+        mongo_operator.write_log('huggingface', layer='bronze', start_time=start_time, status="ERROR", error_message=str(exc), action="insert", affected_rows=affected_rows)
+        raise Exception(str(exc))
+      
 
 def load_raw_image(params):
     # Khởi tạo một dictionary để lưu trữ các đặc trưng của ảnh
@@ -101,6 +133,7 @@ if __name__=='__main__':
         'engine': 'pyarrow'
     }
     # load_raw_collection(params)
+    # load_raw_user_data()
     
     params = {
         'bucket_name': 'mlflow',

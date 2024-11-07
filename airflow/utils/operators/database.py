@@ -18,13 +18,29 @@ class MongoDBOperator():
                 check = True
         return check
     
+    
     def find_data_with_aggregate(self, collection:str, aggregate=None) -> list:
         data = None
         with pymongo.MongoClient(self.__connstr) as client:
             db = client[self.dbname]
-            documents = db[collection].aggregate([])
+            documents = db[collection].aggregate(aggregate)
             data = list(documents)
             return data
+    
+    def find_latest_time(self, cop_layer:str) -> datetime:
+        aggregate = [{
+            '$match': {
+                'status': 'SUCCESS',
+                'layer': cop_layer
+            }}, {
+            '$sort': {
+                'end_time': -1
+            }}, {
+                '$limit': 1
+        }]
+        data = self.find_data_with_aggregate('audit', aggregate)
+        latest_time = data[0]['end_time']
+        return latest_time
     
     def build_query(self, params:dict):
         query = {

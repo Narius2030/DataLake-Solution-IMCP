@@ -6,7 +6,7 @@ from airflow.models import Variable
 from airflow.operators.python_operator import PythonOperator #type: ignore
 from airflow.operators.dummy import DummyOperator #type: ignore
 from airflow.operators.email import EmailOperator #type: ignore
-from load_raw import load_raw_collection, load_raw_image #type: ignore
+from load_raw import load_raw_collection, load_raw_image, load_raw_user_data #type: ignore
 from load_refined import load_refined_data #type: ignore
 from load_business_data import load_encoded_data, load_image_storage #type: ignore
 
@@ -39,6 +39,13 @@ with DAG(
         python_callable = load_raw_collection,
         dag = dag
     )
+    
+    bronze_user_data = PythonOperator(
+        task_id = 'ingest_raw_user_data',
+        python_callable = load_raw_user_data,
+        dag = dag
+    )
+    
     bronze_image_data = PythonOperator(
         task_id = 'ingest_raw_image_data',
         params = {
@@ -74,5 +81,5 @@ with DAG(
 
 
 # Workflow
-start >> [bronze_data, bronze_image_data] >> silver_data >> gold_data >> upload_features >> end
+start >> [bronze_data, bronze_user_data, bronze_image_data] >> silver_data >> gold_data >> upload_features >> end
     
