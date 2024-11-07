@@ -6,7 +6,7 @@ from airflow.models import Variable
 from airflow.operators.python_operator import PythonOperator #type: ignore
 from airflow.operators.dummy import DummyOperator #type: ignore
 from airflow.operators.email import EmailOperator #type: ignore
-from load_raw import load_raw_collection, load_raw_image, load_raw_user_data #type: ignore
+from load_raw import load_raw_parquets, load_raw_image, load_raw_user_data #type: ignore
 from load_refined import load_refined_data #type: ignore
 from load_business_data import load_encoded_data, load_image_storage #type: ignore
 
@@ -29,14 +29,14 @@ with DAG(
     
     # Bronze process
     bronze_data = PythonOperator(
-        task_id = 'ingest_raw_data',
+        task_id = 'ingest_raw_parquet_data',
         params = {
             'bucket_name': Variable.get('bucket_name'),
             'file_path': Variable.get('raw_data_path'),
             'engine': 'pyarrow',
             'mongo-url': Variable.get('MONGO_ATLAS_PYTHON')
         },
-        python_callable = load_raw_collection,
+        python_callable = load_raw_parquets,
         dag = dag
     )
     

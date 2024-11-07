@@ -48,7 +48,7 @@ def upload_image(image_matrix, image_name, bucket_name, file_path):
     minio_operator.upload_object_bytes(image_bytes, bucket_name, f'{file_path}/{image_name}', "image/jpeg")
 
 
-def load_raw_collection(params):
+def load_raw_parquets(params):
     datasets = dowload_raw_data(params['bucket_name'], params['file_path'], params['engine'])
     # start to load
     start_time = pd.to_datetime('now')
@@ -132,7 +132,7 @@ if __name__=='__main__':
         'file_path': '/raw_data/lvis_caption_url.parquet',
         'engine': 'pyarrow'
     }
-    # load_raw_collection(params)
+    # load_raw_parquets(params)
     # load_raw_user_data()
     
     params = {
