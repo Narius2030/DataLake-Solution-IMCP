@@ -2,11 +2,9 @@ import sys
 sys.path.append('/opt/airflow')
 
 import os
-import pymongo
 from tqdm import tqdm
 import time
 import requests
-import base64
 from core.config import get_settings
 from utils.images.yolov8_encoder import YOLOFeatureExtractor
 from utils.operators.storage import MinioStorageOperator
