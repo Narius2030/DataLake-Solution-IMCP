@@ -3,10 +3,6 @@ sys.path.append('/opt/airflow')
 
 import pandas as pd
 import polars as pl
-import requests
-import cv2
-import io
-import time
 from core.config import get_settings
 from utils.operators.database import MongoDBOperator
 from utils.operators.storage import MinioStorageOperator

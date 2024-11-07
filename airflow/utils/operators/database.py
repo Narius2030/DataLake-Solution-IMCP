@@ -18,7 +18,6 @@ class MongoDBOperator():
                 check = True
         return check
     
-    
     def find_data_with_aggregate(self, collection:str, aggregate=None) -> list:
         data = None
         with pymongo.MongoClient(self.__connstr) as client:

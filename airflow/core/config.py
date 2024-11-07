@@ -21,7 +21,7 @@ class Settings(BaseSettings):
     EXTRACT_FEATURE_PATH:str = os.getenv('EXTRACT_FEATURE_PATH')
     RAW_DATA_PATH:str = os.getenv('RAW_DATA_PATH')
     # Working Directory
-    WORKING_DIRECTORY:str = '/opt/airflow'
+    WORKING_DIRECTORY:str = './airflow'
     
     
 def get_settings() -> Settings:

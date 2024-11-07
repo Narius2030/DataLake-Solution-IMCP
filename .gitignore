@@ -16,3 +16,4 @@ logs/**
 /airflow/utils/images/model/*.pt
 /airflow/data/**
 /*.ipynb
+/temp.json
