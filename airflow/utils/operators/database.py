@@ -113,7 +113,7 @@ class MongoDBOperator():
         return affected_rows
     
     def insert_many_not_duplication(self, collection, datasets, batchsize=10000):
-        with self.__client as client:
+        with pymongo.MongoClient(self.__connstr) as client:
             dbconn = client[self.dbname]
             for batch in self.checking_data_generator(dbconn[collection], datasets, batchsize):
                 if batch != []:

@@ -112,7 +112,7 @@ def load_raw_image(params):
             try:
                 image_repsonse = requests.get(image_url, timeout=1)
                 image_rgb = yolo_extractor.cv2_read_image(image_repsonse.content)
-                upload_image(image_rgb, image_name, params['bucket_name'], params['file_path'])
+                upload_image(image_rgb, image_name, params['bucket_name'], params['file_image_path'])
             except Exception:
                 for attempt in range(0, 2):
                     try:
