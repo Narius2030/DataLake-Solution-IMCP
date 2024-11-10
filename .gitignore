@@ -17,3 +17,4 @@ logs/**
 /airflow/data/**
 /*.ipynb
 /temp.json
+/samples/*.ipynb
