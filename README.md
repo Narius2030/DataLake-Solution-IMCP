@@ -3,6 +3,7 @@
 
 
 ## Detailed Architecture
+![image](https://github.com/user-attachments/assets/70ec7f6a-fe5a-4768-893f-6a04f96bdb17)
 
 
 ## Overal Data Pipeline
