@@ -1,7 +1,8 @@
-![image](https://github.com/user-attachments/assets/5ee202b1-e493-4b89-a3ef-7629555f4ac3)# Data Pipeline Strategy
+# Data Pipeline Strategy
+
 
 ## Overal Architecture
-![image](https://github.com/user-attachments/assets/91723ba0-5c6b-4f2c-a39b-a080852030e7)
+![image](https://github.com/user-attachments/assets/5ee202b1-e493-4b89-a3ef-7629555f4ac3)
 
 ## Detailed Architecture
 
