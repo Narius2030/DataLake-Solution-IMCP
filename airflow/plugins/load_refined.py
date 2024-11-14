@@ -45,7 +45,7 @@ def load_refined_data():
             )
             refined_df = scaling_data(tokenized_df, ['url', 's3_url', 'caption', 'short_caption', 'caption_tokens', 'short_caption_tokens', 'publisher', 'created_time'])
             data = refined_df.to_dicts()
-            mongo_operator.insert('refined', data)
+            mongo_operator.insert_batches('refined', data)
             
             affected_rows += len(data)
             print('SUCCESS with', len(data))

@@ -85,7 +85,11 @@ class MinioStorageOperator:
             print(f"Error uploading file: {err}")
             
     def load_object_bytes(self, bucket_name:str, object_name:str, version_id=None):
-        """Lấy Object từ MinIO dưới dạng byte stream."""
+        """
+        Get object in stream bytes from MinIO.
+
+        :param bucket_name: Name of bucket containing that object.
+        """
         try:
             # Lấy đối tượng từ MinIO dưới dạng byte stream
             response  = self.client.get_object(bucket_name, object_name, version_id=version_id)
@@ -97,3 +101,15 @@ class MinioStorageOperator:
         except Exception as e:
             print(f"Error loading object from MinIO: {str(e)}")
             return None
+        
+    def create_presigned_url(self, bucket_name, object_name) -> str:
+        """
+        Create new *Presigned URL* in MinIO.
+
+        :param bucket_name: Name of bucket containing that object.
+        """
+        return self.client.get_presigned_url(
+            method='GET',
+            bucket_name=bucket_name,
+            object_name=object_name
+        )

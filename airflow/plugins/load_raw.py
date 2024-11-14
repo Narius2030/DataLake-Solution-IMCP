@@ -57,11 +57,11 @@ def load_raw_parquets(params):
         if mongo_operator.is_has_data('huggingface') == False:
             warnings.warn("There is no documents in collection --> INGEST ALL")
             # If there is empty collection -> insert all
-            affected_rows = mongo_operator.insert('huggingface', datasets)
+            affected_rows = mongo_operator.insert_batches('huggingface', datasets)
         else:
             # If there are several documents -> check duplication -> insert one-by-one
             warnings.warn("There are documents in collection --> CHECK DUPLICATION")
-            mongo_operator.insert_many_not_duplication('huggingface', datasets)
+            mongo_operator.insert_batches_not_duplication('huggingface', datasets)
         # Write logs
         mongo_operator.write_log('huggingface', layer='bronze', start_time=start_time, status="SUCCESS", action="insert", affected_rows=affected_rows)
     except Exception as ex:
@@ -86,7 +86,7 @@ def load_raw_user_data():
             print(df.shape)
             # Load to mongodb
             data = df.to_dicts()
-            mongo_operator.insert('huggingface', data)
+            mongo_operator.insert_batches('huggingface', data)
             affected_rows += len(data)
             print('SUCCESS with', len(data))
             break
