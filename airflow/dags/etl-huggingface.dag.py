@@ -54,8 +54,11 @@ with DAG(
             task_id = 'ingest_raw_image_data',
             params = common_params,
             python_callable = load_raw_image,
+            trigger_rule='one_success',
             dag = dag
         )
+        
+        [bronze_data, bronze_user_data] >> bronze_image_data
         
     # Silver process
     silver_data = PythonOperator(

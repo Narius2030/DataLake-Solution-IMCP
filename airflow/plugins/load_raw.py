@@ -1,5 +1,5 @@
 import sys
-sys.path.append('/opt/airflow')
+sys.path.append('./airflow')
 
 import pandas as pd
 import warnings
@@ -48,6 +48,11 @@ def upload_image(image_matrix, image_name, bucket_name, file_path):
     minio_operator.upload_object_bytes(image_bytes, bucket_name, f'{file_path}/{image_name}', "image/jpeg")
 
 
+def get_latest_time():
+    latest_time = mongo_operator.find_latest_time('bronze')
+    return latest_time
+
+
 def load_raw_parquets(params):
     datasets = dowload_raw_data(params['bucket_name'], params['file_path'], params['engine'])
     # start to load
@@ -72,24 +77,23 @@ def load_raw_parquets(params):
 def load_raw_user_data():
     start_time = pd.to_datetime('now')
     affected_rows = 0
+    latest_time = get_latest_time()
     try:
         for batch in mongo_operator.data_generator('user_data'):
             data = list(batch)
             df = pl.DataFrame(data, infer_schema_length=1000)
+            df = df.filter(pl.col('created_time') >= latest_time)
             df = df.with_columns(
                 pl.lit('android').alias('publisher'),
                 pl.lit(f'{settings.MINIO_URL}').alias('howpublished'),
                 pl.col('manual_caption').alias('caption'),
-                pl.lit("").alias('short_caption')
-            )
-            df = df.drop(['predicted_caption','image_shape','manual_caption'])
-            print(df.shape)
+                pl.lit('').alias('short_caption')
+            ).drop(['predicted_caption','image_shape','manual_caption'])
             # Load to mongodb
             data = df.to_dicts()
             mongo_operator.insert_batches('huggingface', data)
             affected_rows += len(data)
             print('SUCCESS with', len(data))
-            break
         # Write logs
         mongo_operator.write_log('huggingface', layer='bronze', start_time=start_time, status="SUCCESS", action="insert", affected_rows=affected_rows)
     except Exception as exc:
@@ -102,11 +106,11 @@ def load_raw_user_data():
       
 
 def load_raw_image(params):
-    # Khởi tạo một dictionary để lưu trữ các đặc trưng của ảnh
-    for batch in mongo_operator.data_generator('huggingface'):
-        batch_data = []
-        for doc in tqdm(batch):
-            batch_data.append(doc)
+    latest_time = get_latest_time()
+    for batch in mongo_operator.data_generator('huggingface', limit=220000):
+        df = pl.DataFrame(batch, infer_schema_length=1000).filter(pl.col('created_time') >= latest_time)
+        batch_data = df.to_dicts()
+        for doc in tqdm(batch_data):
             image_url = doc['url']
             image_name = doc['url'][-16:]
             try:
@@ -118,11 +122,12 @@ def load_raw_image(params):
                     try:
                         image_repsonse = requests.get(image_url, timeout=1)
                         image_rgb = yolo_extractor.cv2_read_image(image_repsonse.content)
-                        upload_image(image_rgb, image_name)
+                        upload_image(image_rgb, image_name, params['bucket_name'], params['file_image_path'])
                         break  # Thành công, thoát khỏi vòng lặp thử lại
                     except Exception as e:
-                        print(f"Tải lại dữ liệu từ {doc['url']} (lần {attempt+1}/{2}): {e}")
+                        print(f"Tải lại dữ liệu từ {doc['url']} (lần {attempt+1}/{2}): {str(e)}")
                         time.sleep(2)  # Chờ đợi trước khi thử lại
+        print('SUCCESS with', len(batch_data))
     
         
 
@@ -137,6 +142,6 @@ if __name__=='__main__':
     
     params = {
         'bucket_name': 'mlflow',
-        'file_path': '/raw_data/raw_images',
+        'file_image_path': '/raw_data/raw_images',
     }
     load_raw_image(params)

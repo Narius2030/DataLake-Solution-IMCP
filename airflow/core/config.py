@@ -4,7 +4,7 @@ from pathlib import Path
 from dotenv import load_dotenv
 from pydantic_settings import BaseSettings
 
-env_path = Path("/opt/airflow") / ".env"
+env_path = Path("./airflow") / ".env"
 load_dotenv(dotenv_path=env_path)
 
 
