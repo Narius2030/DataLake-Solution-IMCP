@@ -1,5 +1,5 @@
 import sys
-sys.path.append('./airflow')
+sys.path.append('/opt/airflow')
 
 import pandas as pd
 import warnings
@@ -54,23 +54,22 @@ def get_latest_time():
 
 
 def load_raw_parquets(params):
-    datasets = dowload_raw_data(params['bucket_name'], params['file_path'], params['engine'])
-    # start to load
     start_time = pd.to_datetime('now')
     affected_rows = 0
+    datasets = dowload_raw_data(params['bucket_name'], params['file_path'], params['engine'])
     try:
-        if mongo_operator.is_has_data('huggingface') == False:
+        if mongo_operator.is_has_data('raw') == False:
             warnings.warn("There is no documents in collection --> INGEST ALL")
             # If there is empty collection -> insert all
-            affected_rows = mongo_operator.insert_batches('huggingface', datasets)
+            affected_rows = mongo_operator.insert_batches('raw', datasets)
         else:
             # If there are several documents -> check duplication -> insert one-by-one
             warnings.warn("There are documents in collection --> CHECK DUPLICATION")
-            mongo_operator.insert_batches_not_duplication('huggingface', datasets)
-        # Write logs
-        mongo_operator.write_log('huggingface', layer='bronze', start_time=start_time, status="SUCCESS", action="insert", affected_rows=affected_rows)
+            mongo_operator.insert_batches_not_duplication('raw', datasets)
+            # Write logs
+        mongo_operator.write_log('raw', layer='bronze', start_time=start_time, status="SUCCESS", action="insert", affected_rows=affected_rows)
     except Exception as ex:
-        mongo_operator.write_log('huggingface', layer='bronze', start_time=start_time, status="ERROR", error_message=str(ex), action="insert", affected_rows=affected_rows)
+        mongo_operator.write_log('raw', layer='bronze', start_time=start_time, status="ERROR", error_message=str(ex), action="insert", affected_rows=affected_rows)
         raise Exception(str(ex))
   
   
@@ -78,11 +77,13 @@ def load_raw_user_data():
     start_time = pd.to_datetime('now')
     affected_rows = 0
     latest_time = get_latest_time()
+    print("Latest time: ", latest_time)
     try:
         for batch in mongo_operator.data_generator('user_data'):
             data = list(batch)
             df = pl.DataFrame(data, infer_schema_length=1000)
             df = df.filter(pl.col('created_time') >= latest_time)
+            print("Total rows of batch", df.shape)
             df = df.with_columns(
                 pl.lit('android').alias('publisher'),
                 pl.lit(f'{settings.MINIO_URL}').alias('howpublished'),
@@ -91,23 +92,23 @@ def load_raw_user_data():
             ).drop(['predicted_caption','image_shape','manual_caption'])
             # Load to mongodb
             data = df.to_dicts()
-            mongo_operator.insert_batches('huggingface', data)
+            mongo_operator.insert_batches('raw', data)
             affected_rows += len(data)
             print('SUCCESS with', len(data))
         # Write logs
-        mongo_operator.write_log('huggingface', layer='bronze', start_time=start_time, status="SUCCESS", action="insert", affected_rows=affected_rows)
+        mongo_operator.write_log('raw', layer='bronze', start_time=start_time, status="SUCCESS", action="insert", affected_rows=affected_rows)
     except Exception as exc:
         aggregate = [{'created_time': pd.to_datetime('now')}, {'$project': {'_id': 1}}]
-        data = mongo_operator.find_data_with_aggregate('refined', aggregate)
+        data = mongo_operator.find_data_with_aggregate('raw', aggregate)
         affected_rows = len(data)
         # Write logs
-        mongo_operator.write_log('huggingface', layer='bronze', start_time=start_time, status="ERROR", error_message=str(exc), action="insert", affected_rows=affected_rows)
+        mongo_operator.write_log('raw', layer='bronze', start_time=start_time, status="ERROR", error_message=str(exc), action="insert", affected_rows=affected_rows)
         raise Exception(str(exc))
       
 
 def load_raw_image(params):
     latest_time = get_latest_time()
-    for batch in mongo_operator.data_generator('huggingface', limit=220000):
+    for batch in mongo_operator.data_generator('raw', limit=220000):
         df = pl.DataFrame(batch, infer_schema_length=1000).filter(pl.col('created_time') >= latest_time)
         batch_data = df.to_dicts()
         for doc in tqdm(batch_data):

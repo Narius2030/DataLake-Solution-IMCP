@@ -29,7 +29,7 @@ def load_refined_data():
     affected_rows = 0
     latest_time = get_latest_time()
     try:
-        for batch in mongo_operator.data_generator('huggingface'):
+        for batch in mongo_operator.data_generator('raw', limit=50000):
             data = list(batch)
             df = pl.DataFrame(data).drop('_id')
             df = df.filter(pl.col('created_time') >= latest_time)
