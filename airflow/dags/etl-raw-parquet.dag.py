@@ -3,7 +3,7 @@ from airflow.utils.dates import days_ago
 from airflow.models import Variable
 from airflow.operators.python_operator import PythonOperator #type: ignore
 from airflow.operators.dummy import DummyOperator #type: ignore
-from load_raw import load_raw_parquets #type: ignore
+from load_raw import load_raw_parquets, check_for_new_parquet_files #type: ignore
 
 
 
@@ -23,13 +23,23 @@ with DAG(
     # Start pipeline
     start = DummyOperator(task_id="start")
     
+    check_new_parquets = PythonOperator(
+        task_id = 'check_new_parquets',
+        params = {
+            'bucket_name': Variable.get('bucket_name'),
+            'file_path': Variable.get('raw_data_path')
+        },
+        python_callable = check_for_new_parquet_files,
+        do_xcom_push=True,
+        dag = dag
+    )
+    
     bronze_data = PythonOperator(
         task_id = 'ingest_raw_parquet_data',
         params = {
             'bucket_name': Variable.get('bucket_name'),
-            'file_path': Variable.get('raw_data_path'),
-            'engine': 'pyarrow',
-            'mongo-url': Variable.get('MONGO_ATLAS_PYTHON')
+            'file_pathes': '{{ ti.xcom_pull(task_ids="check_new_parquets") }}',         #Variable.get('raw_data_path')
+            'engine': 'pyarrow'
         },
         python_callable = load_raw_parquets,
         dag = dag
@@ -38,4 +48,4 @@ with DAG(
     # End pipeline
     end = DummyOperator(task_id="end")
     
-start >> bronze_data >> end
+start >> check_new_parquets >> bronze_data >> end

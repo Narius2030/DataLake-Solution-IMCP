@@ -9,7 +9,9 @@ import cv2
 import time
 import polars as pl
 import io
+import pytz
 from tqdm import tqdm
+from datetime import timezone
 from core.config import get_settings
 from utils.operators.database import MongoDBOperator
 from utils.operators.storage import MinioStorageOperator
@@ -53,24 +55,46 @@ def get_latest_time():
     return latest_time
 
 
-def load_raw_parquets(params):
+def check_for_new_parquet_files(params):
+    # ... (các phần còn lại của hàm giữ nguyên)
+    print(params['bucket_name'], params['file_path'])
+    while True:
+        objects = minio_operator.get_list_files(params['bucket_name'], params['file_path'])
+        print(objects)
+        latest_time = get_latest_time()
+        new_files = []
+        for obj in objects:
+            print('HERE ', obj.object_name)
+            if obj.last_modified != None:
+                obj_last_modified = obj.last_modified.astimezone(pytz.timezone('Asia/Ho_Chi_Minh'))
+                latest_time = latest_time.astimezone(pytz.timezone('Asia/Ho_Chi_Minh'))
+                if (obj_last_modified > latest_time):  # So sánh với thời gian xử lý cuối cùng
+                    new_files.append(obj.object_name)
+        if new_files != []:
+            break
+        time.sleep(1)
+
+    print(new_files)
+    return new_files
+
+
+def load_raw_parquets(**kwargs):
     start_time = pd.to_datetime('now')
     affected_rows = 0
-    datasets = dowload_raw_data(params['bucket_name'], params['file_path'], params['engine'])
-    try:
-        if mongo_operator.is_has_data('raw') == False:
+    # new_files = check_for_new_parquet_files()
+    ti = kwargs['ti']
+    file_pathes = ti.xcom_pull(task_ids="check_new_parquets")
+    for file_path in file_pathes:
+        datasets = dowload_raw_data(kwargs['params']['bucket_name'], file_path, kwargs['params']['engine'])
+        try:
             warnings.warn("There is no documents in collection --> INGEST ALL")
             # If there is empty collection -> insert all
             affected_rows = mongo_operator.insert_batches('raw', datasets)
-        else:
-            # If there are several documents -> check duplication -> insert one-by-one
-            warnings.warn("There are documents in collection --> CHECK DUPLICATION")
-            mongo_operator.insert_batches_not_duplication('raw', datasets)
             # Write logs
-        mongo_operator.write_log('raw', layer='bronze', start_time=start_time, status="SUCCESS", action="insert", affected_rows=affected_rows)
-    except Exception as ex:
-        mongo_operator.write_log('raw', layer='bronze', start_time=start_time, status="ERROR", error_message=str(ex), action="insert", affected_rows=affected_rows)
-        raise Exception(str(ex))
+            mongo_operator.write_log('raw', layer='bronze', start_time=start_time, status="SUCCESS", action="insert", affected_rows=affected_rows)
+        except Exception as ex:
+            mongo_operator.write_log('raw', layer='bronze', start_time=start_time, status="ERROR", error_message=str(ex), action="insert", affected_rows=affected_rows)
+            raise Exception(str(ex))
   
   
 def load_raw_user_data():
@@ -138,11 +162,11 @@ if __name__=='__main__':
         'file_path': '/raw_data/lvis_caption_url.parquet',
         'engine': 'pyarrow'
     }
-    # load_raw_parquets(params)
+    load_raw_parquets(params)
     # load_raw_user_data()
     
     params = {
         'bucket_name': 'mlflow',
         'file_image_path': '/raw_data/raw_images',
     }
-    load_raw_image(params)
+    # load_raw_image(params)

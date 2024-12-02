@@ -2,12 +2,10 @@ import datetime
 import json
 from airflow import DAG
 from airflow.utils.dates import days_ago
-from airflow.models import Variable
 from airflow.utils.edgemodifier import Label
 from airflow.utils.task_group import TaskGroup
 from airflow.operators.python_operator import PythonOperator #type: ignore
 from airflow.operators.dummy import DummyOperator #type: ignore
-from load_raw import load_raw_parquets, load_raw_image, load_raw_user_data #type: ignore
 from load_refined import load_refined_data #type: ignore
 from load_business_data import load_encoded_data, load_image_storage #type: ignore
 

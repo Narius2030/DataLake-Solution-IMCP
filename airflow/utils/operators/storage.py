@@ -19,6 +19,12 @@ class MinioStorageOperator:
             secure=secure  # Đặt thành True nếu dùng HTTPS
         )
 
+
+    def get_list_files(self, bucket_name:str, prefix:str):
+        objects = self.client.list_objects(bucket_name, prefix=prefix)
+        return objects
+        
+
     def upload_file(self, bucket_name, object_name, file_path):
         """
         Upload tệp lên MinIO.
