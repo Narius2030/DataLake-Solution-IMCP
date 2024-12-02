@@ -9,7 +9,7 @@ from load_raw import load_raw_user_data #type: ignore
 # DAGs
 with DAG(
     'IMCP_Raw_User_Data_Integration',
-    schedule_interval='0 23 1 * 1',
+    schedule_interval='0 23 * * 1',
     default_args={
         'start_date': days_ago(1),
         'email_on_failure': True,

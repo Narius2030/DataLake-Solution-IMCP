@@ -44,24 +44,21 @@ def dowload_raw_data(bucket_name, file_path, parquet_engine):
 
 
 def upload_image(image_matrix, image_name, bucket_name, file_path):
-    # Bước 1: Chuyển đổi ma trận ảnh sang byte
     _, encoded_image = cv2.imencode('.jpg', image_matrix)
     image_bytes = io.BytesIO(encoded_image)
     minio_operator.upload_object_bytes(image_bytes, bucket_name, f'{file_path}/{image_name}', "image/jpeg")
 
 
-def get_latest_time():
-    latest_time = mongo_operator.find_latest_time('bronze')
+def get_latest_time(source_table:str):
+    latest_time = mongo_operator.find_latest_time('bronze', source_table)
     return latest_time
 
 
 def check_for_new_parquet_files(params):
-    # ... (các phần còn lại của hàm giữ nguyên)
-    print(params['bucket_name'], params['file_path'])
     while True:
         objects = minio_operator.get_list_files(params['bucket_name'], params['file_path'])
         print(objects)
-        latest_time = get_latest_time()
+        latest_time = get_latest_time('parquet')
         new_files = []
         for obj in objects:
             print('HERE ', obj.object_name)
@@ -100,7 +97,7 @@ def load_raw_parquets(**kwargs):
 def load_raw_user_data():
     start_time = pd.to_datetime('now')
     affected_rows = 0
-    latest_time = get_latest_time()
+    latest_time = get_latest_time('user')
     print("Latest time: ", latest_time)
     try:
         for batch in mongo_operator.data_generator('user_data'):
@@ -108,6 +105,8 @@ def load_raw_user_data():
             df = pl.DataFrame(data, infer_schema_length=1000)
             df = df.filter(pl.col('created_time') >= latest_time)
             print("Total rows of batch", df.shape)
+            if df.shape[0]==0:
+                continue
             df = df.with_columns(
                 pl.lit('android').alias('publisher'),
                 pl.lit(f'{settings.MINIO_URL}').alias('howpublished'),
@@ -120,18 +119,18 @@ def load_raw_user_data():
             affected_rows += len(data)
             print('SUCCESS with', len(data))
         # Write logs
-        mongo_operator.write_log('raw', layer='bronze', start_time=start_time, status="SUCCESS", action="insert", affected_rows=affected_rows)
+        mongo_operator.write_log('user', layer='bronze', start_time=start_time, status="SUCCESS", action="insert", affected_rows=affected_rows)
     except Exception as exc:
         aggregate = [{'created_time': pd.to_datetime('now')}, {'$project': {'_id': 1}}]
         data = mongo_operator.find_data_with_aggregate('raw', aggregate)
         affected_rows = len(data)
         # Write logs
-        mongo_operator.write_log('raw', layer='bronze', start_time=start_time, status="ERROR", error_message=str(exc), action="insert", affected_rows=affected_rows)
+        mongo_operator.write_log('user', layer='bronze', start_time=start_time, status="ERROR", error_message=str(exc), action="insert", affected_rows=affected_rows)
         raise Exception(str(exc))
       
 
 def load_raw_image(params):
-    latest_time = get_latest_time()
+    latest_time = get_latest_time('image')
     for batch in mongo_operator.data_generator('raw', limit=220000):
         df = pl.DataFrame(batch, infer_schema_length=1000).filter(pl.col('created_time') >= latest_time)
         batch_data = df.to_dicts()

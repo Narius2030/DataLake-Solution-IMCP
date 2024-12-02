@@ -43,7 +43,7 @@ class MongoDBOperator():
             data = list(documents)
             return data
     
-    def find_latest_time(self, comp_layer:str) -> datetime:
+    def find_latest_time(self, comp_layer:str, source_table:str) -> datetime:
         """Query the latest integration time of specific layer
 
         Args:
@@ -55,7 +55,8 @@ class MongoDBOperator():
         aggregate = [{
             '$match': {
                 'status': 'SUCCESS',
-                'layer': comp_layer
+                'layer': comp_layer,
+                'table_name': source_table,
             }}, {
             '$sort': {
                 'end_time': -1

@@ -1,5 +1,3 @@
-import datetime
-import json
 from airflow import DAG
 from airflow.utils.dates import days_ago
 from airflow.utils.edgemodifier import Label
@@ -13,7 +11,7 @@ from load_business_data import load_encoded_data, load_image_storage #type: igno
 # DAGs
 with DAG(
     'IMCP_Refined_Business_Integration',
-    schedule_interval='0 23 * * *',
+    schedule_interval='0 23 3 * *',
     default_args={
         'start_date': days_ago(1),
         'email_on_failure': True,
@@ -38,12 +36,13 @@ with DAG(
     # Gold process
     with TaskGroup("extract_image_features", tooltip="Tasks for image feature extraction") as gold:
         gold_data = PythonOperator(
-            task_id = 'extract_image_feature',
+            task_id = 'extract_feature',
             python_callable = load_encoded_data,
+            do_xcom_push=True,
             dag = dag
         )
         upload_features = PythonOperator(
-            task_id = 'upload_s3_image_feature',
+            task_id = 'upload_s3_feature',
             python_callable = load_image_storage,
             dag = dag
         )

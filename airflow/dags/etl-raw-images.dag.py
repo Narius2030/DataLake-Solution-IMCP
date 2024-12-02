@@ -10,7 +10,7 @@ from load_raw import load_raw_image #type: ignore
 # DAGs
 with DAG(
     'IMCP_Raw_Image_Integration',
-    schedule_interval='0 23 * * *',
+    schedule_interval='0 23 1 * *',
     default_args={
         'start_date': days_ago(1),
         'email_on_failure': True,

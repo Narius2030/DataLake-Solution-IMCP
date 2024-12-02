@@ -19,15 +19,15 @@ minio_operator = MinioStorageOperator(endpoint=f'{settings.MINIO_HOST}:{settings
 
 
 
-def get_latest_time():
-    latest_time = mongo_operator.find_latest_time('silver')
+def get_latest_time(source_table:str):
+    latest_time = mongo_operator.find_latest_time('silver', source_table)
     return latest_time
 
 
 def load_refined_data():
     start_time = pd.to_datetime('now')
     affected_rows = 0
-    latest_time = get_latest_time()
+    latest_time = get_latest_time('refined')
     try:
         for batch in mongo_operator.data_generator('raw', limit=50000):
             data = list(batch)
