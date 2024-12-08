@@ -38,7 +38,6 @@ with DAG(
         task_id = 'ingest_raw_parquet_data',
         params = {
             'bucket_name': Variable.get('bucket_name'),
-            'file_pathes': '{{ ti.xcom_pull(task_ids="check_new_parquets") }}',         #Variable.get('raw_data_path')
             'engine': 'pyarrow'
         },
         python_callable = load_raw_parquets,
