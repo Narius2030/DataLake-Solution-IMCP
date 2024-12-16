@@ -88,9 +88,9 @@ def load_raw_parquets(**kwargs):
             # If there is empty collection -> insert all
             affected_rows = mongo_operator.insert_batches('raw', datasets)
             # Write logs
-            mongo_operator.write_log('raw', layer='bronze', start_time=start_time, status="SUCCESS", action="insert", affected_rows=affected_rows)
+            mongo_operator.write_log('parquet', layer='bronze', start_time=start_time, status="SUCCESS", action="insert", affected_rows=affected_rows)
         except Exception as ex:
-            mongo_operator.write_log('raw', layer='bronze', start_time=start_time, status="ERROR", error_message=str(ex), action="insert", affected_rows=affected_rows)
+            mongo_operator.write_log('parquet', layer='bronze', start_time=start_time, status="ERROR", error_message=str(ex), action="insert", affected_rows=affected_rows)
             raise Exception(str(ex))
   
   
