@@ -46,7 +46,7 @@ services:
     image: mysql:8.0
     container_name: mysql
     volumes:
-      - mysql_h:/var/lib/mysql
+      - ./mysql_h:/var/lib/mysql
       - ./dataset:/tmp/dataset
       - ./load_dataset_into_mysql:/tmp/load_dataset
     ports:
@@ -74,7 +74,7 @@ services:
     networks:
       - data_network
     environment:   
-      - MLFLOW_S3_ENDPOINT_URL=http://minio:9000/
+      - MLFLOW_S3_ENDPOINT_URL=http://116.118.50.253:9000
       - AWS_ACCESS_KEY_ID=minio
       - AWS_SECRET_ACCESS_KEY=minio123
     # environment:#   - MLFLOW_S3_ENDPOINT_URL=http://minio:9000/#   - AWS_ACCESS_KEY_ID=minio#   - AWS_SECRET_ACCESS_KEY=minio123
