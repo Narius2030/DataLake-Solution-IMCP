@@ -1,16 +1,16 @@
 version: "3.1"
 
 services:
-  # Airflow setup
-  airflow:
-    image: imcp/airflow:2.9.1
-    volumes:
-      - ./airflow:/opt/airflow
-    ports:
-      - "8081:8080"
-    command: airflow standalone
-    networks:
-      - data_network
+  # # Airflow setup
+  # airflow:
+  #   image: imcp/airflow:2.9.1
+  #   volumes:
+  #     - ./airflow:/opt/airflow
+  #   ports:
+  #     - "8081:8080"
+  #   command: airflow standalone
+  #   networks:
+  #     - data_network
 
   # minio:
   #   hostname: minio
@@ -41,6 +41,44 @@ services:
   #     - minio
   #   networks:
   #     - data_network
+
+  mlflow-mysql:
+    image: mysql:8.0
+    container_name: mysql
+    volumes:
+      - mysql_h:/var/lib/mysql
+      - ./dataset:/tmp/dataset
+      - ./load_dataset_into_mysql:/tmp/load_dataset
+    ports:
+      - "3307:3306"
+    # env_file: .env
+    environment:
+      - MYSQL_DATABASE=mlflowdb
+      - MYSQL_ROOT_USER=root
+      - MYSQL_USER=admin
+      - MYSQL_PASSWORD=admin
+      - MYSQL_ROOT_PASSWORD=admin
+    networks:
+      - data_network
+
+  web:
+    restart: always
+    build: ./docker_image/mlflow
+    image: mlflow
+    container_name: mlflow_server
+    depends_on:
+      - mc
+      - mlflow-mysql
+    ports:
+      - "7893:5000"
+    networks:
+      - data_network
+    environment:   
+      - MLFLOW_S3_ENDPOINT_URL=http://minio:9000/
+      - AWS_ACCESS_KEY_ID=minio
+      - AWS_SECRET_ACCESS_KEY=minio123
+    # environment:#   - MLFLOW_S3_ENDPOINT_URL=http://minio:9000/#   - AWS_ACCESS_KEY_ID=minio#   - AWS_SECRET_ACCESS_KEY=minio123
+    command: mlflow server --backend-store-uri mysql+pymysql://root:admin@mysql:3306/mlflowdb --default-artifact-root s3://mlflow/ --artifacts-destination s3://mlflow/ --host 0.0.0.0
 
 networks:
   data_network:
