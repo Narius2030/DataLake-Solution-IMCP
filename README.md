@@ -1,5 +1,5 @@
 ## Overal Architecture
-![image](https://github.com/user-attachments/assets/e7fc0152-fe7c-4c00-8d83-c268d4fee4a9)
+![image](https://github.com/user-attachments/assets/c8195cf6-ee86-46f8-8890-ddd793b68cb5)
 
 
 ## Detailed Architecture
